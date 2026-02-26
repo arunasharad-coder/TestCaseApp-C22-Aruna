@@ -94,7 +94,7 @@ def convert_to_csv(test_suite):
 
 # --- Streamlit UI ---
 st.set_page_config(page_title="QA Test Case Gen", layout="centered")
-st.title("📋 QA Step Generator")
+st.title("📋 QA Test Case Generator")
 
 query = st.text_input("Describe the feature to test:")
 
