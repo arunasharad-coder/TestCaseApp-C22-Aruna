@@ -67,20 +67,15 @@ workflow.add_edge("reviewer", END)
 app = workflow.compile()
 
 # --- CSV Helper Function ---
-def convert_to_csv(test_list):
+def convert_to_csv(test_suite):
     jira_data = []
-    for i, tc in enumerate(test_list):
-        lines = tc.splitlines()
-        
-        # We assume line 5 is the "Validate" line based on your 1-5 format
-        steps = "\n".join(lines[:4])  # Steps 1 to 4
-        expected_result = lines[4] if len(lines) >= 5 else "Result not specified"
-        
+    for i, tc in enumerate(test_suite):
         jira_data.append({
-            "Summary": f"Test Case {i+1}: " + (lines[0] if lines else "Navigation"),
-            "Description": steps,
-            "Expected Result": expected_result, # New Column!
+            "Summary": f"Test Case {i+1}: Navigation Flow",
+            "Test Step": tc.steps,            # Steps 1-4
+            "Expected Result": tc.expected_result, # Step 5
             "Issue Type": "Test",
+            "Status": "To Do",
             "Priority": "Medium"
         })
     
@@ -102,15 +97,23 @@ if st.button("Generate 5 Cases", type="primary"):
         st.error("Please enter a requirement.")
 
 if "final_cases" in st.session_state:
-    st.subheader("Results")
-    for tc in st.session_state.final_cases:
-        st.code(tc, language="text")
+    st.subheader("Generated Test Suite")
     
-    # Download Button
+    for i, tc in enumerate(st.session_state.final_cases):
+        with st.expander(f"Test Case {i+1}", expanded=True):
+            col1, col2 = st.columns([2, 1]) # Makes the steps column wider
+            with col1:
+                st.markdown("**Steps:**")
+                st.code(tc.steps, language="text")
+            with col2:
+                st.markdown("**Expected Result:**")
+                st.info(tc.expected_result)
+
+    # Place the Download button right after the loop
     csv_data = convert_to_csv(st.session_state.final_cases)
     st.download_button(
-        label="📥 Download Test Cases (CSV)",
+        label="📥 Download for Jira Import",
         data=csv_data,
-        file_name="test_cases.csv",
+        file_name="jira_test_cases.csv",
         mime="text/csv",
     )
