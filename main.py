@@ -57,15 +57,33 @@ playwright_prompt = ChatPromptTemplate.from_messages([
 playwright_chain = playwright_prompt | llm
 
 def designer_node(state: AgentState):
-    # This invokes the generator we just built above
-    generated = test_case_generator.invoke({"user_input": state["user_input"]})
+    user_req = state["user_input"].lower()
     
-    # We return the list of TestCase objects (which now includes steps, results, AND selectors)
+    # 🛑 Guardrail: Minimum length check
+    if len(user_req) < 10:
+        return {"reflection": "Error: Requirement too short to generate a valid test."}
+    
+    # 🛑 Guardrail: Basic safety/relevance check
+    forbidden_words = ["hack", "bypass", "exploit"]
+    if any(word in user_req for word in forbidden_words):
+        return {"reflection": "Error: Request violates safety policy."}
+
+    generated = test_case_generator.invoke({"user_input": state["user_input"]})
     return {"test_cases": generated.test_cases[:5]}
 
 def reviewer_node(state: AgentState):
-    # Simple pass-through for this version to keep it fast
-    return {"reflection": "Format looks good."}
+    cases = state.get("test_cases", [])
+    
+    for i, tc in enumerate(cases):
+        # 🛡️ Guardrail: Ensure step 5 exists and has the right prefix
+        if "Validate -" not in tc.expected_result:
+            return {"reflection": f"TC {i+1} failed quality check: Missing 'Validate -'"}
+        
+        # 🛡️ Guardrail: Ensure selectors aren't empty
+        if not tc.selectors or len(tc.selectors) < 2:
+            return {"reflection": f"TC {i+1} failed: No selectors found for automation."}
+
+    return {"reflection": "Passed QC"}
 
 # --- Graph ---
 workflow = StateGraph(AgentState)
@@ -113,7 +131,27 @@ if st.button("Generate 5 Cases", type="primary"):
     else:
         st.error("Please enter a requirement.")
 
-# 2. DISPLAY LOGIC (Your code goes here)
+# --- 1. THE MAIN TRIGGER (Outside the loop) ---
+if st.button("Generate 5 Cases", type="primary"):
+    if query:
+        with st.spinner("Factory is running QC..."):
+            # Trigger LangGraph
+            results = app.invoke({"user_input": query, "test_cases": []})
+            
+            # GUARDRAIL CHECK
+            if "Error" in results.get("reflection", "") or "failed" in results.get("reflection", ""):
+                st.error(f"🚨 Quality Control Blocked: {results['reflection']}")
+            else:
+                st.session_state.final_cases = results["test_cases"]
+                # Clear old code from previous sessions
+                for key in list(st.session_state.keys()):
+                    if key.startswith("pw_code_"):
+                        del st.session_state[key]
+                st.success("✅ Test suite passed all guardrails!")
+    else:
+        st.error("Please enter a requirement.")
+
+# --- 2. THE DISPLAY LOOP ---
 if "final_cases" in st.session_state:
     st.subheader("Generated Test Suite")
     
@@ -134,8 +172,9 @@ if "final_cases" in st.session_state:
                 st.markdown("**Target Selectors:**")
                 st.caption(tc.selectors)
                 
-                if st.button(f"Generate Code for TC {i+1}", key=f"gen_btn_{i}"):
-                    with st.spinner("Writing Playwright script..."):
+                # This button only generates the script for THIS specific case
+                if st.button(f"Generate Playwright Code for TC {i+1}", key=f"gen_{i}"):
+                    with st.spinner("Writing script..."):
                         code_out = playwright_chain.invoke({
                             "steps": tc.steps,
                             "expected_result": tc.expected_result,
@@ -143,6 +182,7 @@ if "final_cases" in st.session_state:
                         })
                         st.session_state[f"pw_code_{i}"] = code_out.content
                 
+                # Show code and download if it has been generated
                 if f"pw_code_{i}" in st.session_state:
                     st.code(st.session_state[f"pw_code_{i}"], language="typescript")
                     st.download_button(
@@ -153,7 +193,8 @@ if "final_cases" in st.session_state:
                         key=f"dl_{i}" 
                     )
 
-    # 3. CSV DOWNLOAD (Keep this at the very bottom)
+    # --- 3. GLOBAL DOWNLOAD ---
+    st.divider()
     csv_data = convert_to_csv(st.session_state.final_cases)
     st.download_button(
         label="📥 Download All for Jira Import",
