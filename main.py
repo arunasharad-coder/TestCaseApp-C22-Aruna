@@ -58,12 +58,21 @@ playwright_chain = playwright_prompt | llm
 # --- Nodes ---
 def designer_node(state: AgentState):
     user_req = state["user_input"].lower()
-    if len(user_req) < 10:
-        return {"reflection": "Error: Requirement too short."}
     
-    generated = test_case_generator.invoke({"user_input": state["user_input"]})
-    return {"test_cases": generated.test_cases[:5]}
+    # 1. First Line of Defense: Simple String Check
+    if len(user_req) < 10:
+        return {"reflection": "Error: Requirement too short to be a valid test case."}
 
+    # 2. Second Line of Defense: Try/Except for Parsing
+    try:
+        generated = test_case_generator.invoke({"user_input": state["user_input"]})
+        return {"test_cases": generated.test_cases[:5], "reflection": "Passed Initial Generation"}
+    except Exception as e:
+        # If the LLM returns garbage or fails to format, we catch it here
+        return {
+            "test_cases": [], 
+            "reflection": "Error: The AI couldn't turn that input into a test case. Please try a specific feature description."
+        }
 def reviewer_node(state: AgentState):
     cases = state.get("test_cases", [])
     if not cases:
