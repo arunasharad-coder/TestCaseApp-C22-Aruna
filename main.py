@@ -1,5 +1,4 @@
-##The content of app.py was already displayed. Here it is again for your convenience:
-
+%%writefile app.py
 import os
 from getpass import getpass
 from typing import Annotated, Sequence, TypedDict, Callable
@@ -18,16 +17,10 @@ from langgraph.graph import StateGraph, END
 # Set OpenAI API key from environment variable (for Streamlit deployment)
 # In a production environment, use Streamlit secrets or other secure methods.
 if "OPENAI_API_KEY" not in os.environ:
-    # For local execution without setting env var, you can replace this with st.secrets if deploying
-    # or prompt the user.
-    # For this specific setup, we'll assume the key is set in the environment or directly provided in code if necessary.
-    # For demonstration in Colab, getpass was used, but for app.py, an environment variable is typical.
-    # For simplicity, we'll use a placeholder and expect it to be set as an environment variable in a deployed context.
     st.warning("OPENAI_API_KEY environment variable not found. Please set it for the app to function.")
-    # You might want to halt execution or disable functionality if the key is missing
 
 # Initialize the language model
-llm = ChatOpenAI(model="gpt-5")
+llm = ChatOpenAI(model="gpt-5") # Remember to change this to a valid model like 'gpt-4o-mini' or 'gpt-3.5-turbo' for deployment
 
 # Define AgentState
 class AgentState(TypedDict):
@@ -61,7 +54,7 @@ def designer_node(state: AgentState):
     st.write(f"---GENERATING TEST CASES FOR: {user_input}---")
     generated_test_cases_obj = test_case_generator.invoke({"user_input": user_input})
     generated_test_cases = generated_test_cases_obj.test_cases
-    return {"test_cases": generated_test_cases}
+    return {"test_cases": generated_test_cases} # Return all generated test cases
 
 # Create the prompt template for the reviewer node
 reviewer_prompt = ChatPromptTemplate.from_messages(
@@ -138,17 +131,40 @@ if st.button("Generate Test Cases"):
     if user_query:
         st.subheader("Generating Test Cases...")
         initial_state = {"user_input": user_query, "test_cases": []}
-        
+
         # Run the LangGraph application
         final_state = app.invoke(initial_state)
-        
-        st.subheader("Final Result:")
-        st.write("### Generated Test Cases:")
-        for i, tc in enumerate(final_state["test_cases"]):
-            st.write(f"{i+1}. {tc}")
-        
-        st.write("### Final Reflection:")
-        st.write(final_state["reflection"])
+
+        st.session_state.all_test_cases = final_state["test_cases"]
+        st.session_state.current_page = 0
+        st.session_state.page_size = 100
+        st.session_state.reflection = final_state["reflection"]
 
     else:
         st.warning("Please enter a query to generate test cases.")
+
+if "all_test_cases" in st.session_state:
+    all_test_cases = st.session_state.all_test_cases
+    current_page = st.session_state.current_page
+    page_size = st.session_state.page_size
+
+    start_idx = current_page * page_size
+    end_idx = min(start_idx + page_size, len(all_test_cases))
+
+    st.subheader(f"Generated Test Cases ({start_idx + 1}-{end_idx} of {len(all_test_cases)}):")
+    for i, tc in enumerate(all_test_cases[start_idx:end_idx]):
+        st.write(f"{start_idx + i + 1}. {tc}")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Previous Page", disabled=(current_page == 0)):
+            st.session_state.current_page -= 1
+            st.experimental_rerun()
+    with col2:
+        if st.button("Next Page", disabled=(end_idx == len(all_test_cases))):
+            st.session_state.current_page += 1
+            st.experimental_rerun()
+
+    st.write("### Final Reflection:")
+    st.write(st.session_state.reflection)
+
