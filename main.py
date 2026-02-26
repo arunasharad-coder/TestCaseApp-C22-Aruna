@@ -112,31 +112,34 @@ def convert_to_csv(test_suite):
 
 # --- Streamlit UI ---
 st.set_page_config(page_title="QA Test Case Gen", layout="centered")
-st.title("📋 QA Test Case Generator")
 
-# --- ADD THE SIDEBAR HERE ---
+# 1. SIDEBAR (Project Status & Links)
 with st.sidebar:
     st.markdown("### 🛠️ Project Status")
     st.info("Verified Stable Release")
-    st.markdown(f"**URL:** [testcaseapp...](https://testcaseapp-c22-aruna.streamlit.app/)")
+    st.markdown("**Live App URL:**")
+    st.code("https://testcaseapp-c22-aruna.streamlit.app/", language="text")
     st.divider()
     st.write("This agent uses LangGraph to orchestrate a Designer and a Reviewer node for high-quality test generation.")
+    st.markdown("---")
+    st.caption("Developed by Aruna")
 
-# Then continue with your input field
-query = st.text_input("Describe the feature to test:", placeholder="e.g. Test search functionality on google.com")
+# 2. MAIN HEADER
+st.title("📋 QA Test Case Generator")
 query = st.text_input("Describe the feature to test:", placeholder="e.g. Test search functionality on google.com")
 
-# 1. MAIN TRIGGER (Cleaned up)
+# 3. MAIN TRIGGER (LangGraph Execution)
 if st.button("Generate 5 Cases", type="primary"):
     if query:
         with st.spinner("Factory is running QC..."):
             results = app.invoke({"user_input": query, "test_cases": []})
             
+            # GUARDRAIL CHECK: Catch errors from the Designer or Reviewer nodes
             if "Error" in results.get("reflection", "") or "failed" in results.get("reflection", ""):
                 st.error(f"🚨 Quality Control Blocked: {results['reflection']}")
             else:
                 st.session_state.final_cases = results["test_cases"]
-                # Clean up old code sessions
+                # Clean up old code sessions to prevent mixing old scripts with new cases
                 for key in list(st.session_state.keys()):
                     if key.startswith("pw_code_"):
                         del st.session_state[key]
@@ -144,7 +147,7 @@ if st.button("Generate 5 Cases", type="primary"):
     else:
         st.error("Please enter a requirement.")
 
-# 2. DISPLAY LOOP
+# 4. DISPLAY LOOP (Manual Steps & Playwright Tabs)
 if "final_cases" in st.session_state:
     st.subheader("Generated Test Suite")
     
@@ -165,6 +168,7 @@ if "final_cases" in st.session_state:
                 st.markdown("**Target Selectors:**")
                 st.caption(tc.selectors)
                 
+                # Each button has a unique key using the loop index 'i'
                 if st.button(f"Generate Playwright Code for TC {i+1}", key=f"gen_{i}"):
                     with st.spinner("Writing script..."):
                         code_out = playwright_chain.invoke({
@@ -174,6 +178,7 @@ if "final_cases" in st.session_state:
                         })
                         st.session_state[f"pw_code_{i}"] = code_out.content
                 
+                # Show code and download button if script exists in session state
                 if f"pw_code_{i}" in st.session_state:
                     st.code(st.session_state[f"pw_code_{i}"], language="typescript")
                     st.download_button(
@@ -184,7 +189,7 @@ if "final_cases" in st.session_state:
                         key=f"dl_{i}" 
                     )
 
-    # 3. GLOBAL DOWNLOAD
+    # 5. GLOBAL DOWNLOAD (Jira CSV)
     st.divider()
     csv_data = convert_to_csv(st.session_state.final_cases)
     st.download_button(
@@ -192,4 +197,5 @@ if "final_cases" in st.session_state:
         data=csv_data,
         file_name="jira_test_cases.csv",
         mime="text/csv",
+        key="global_csv_download"
     )
