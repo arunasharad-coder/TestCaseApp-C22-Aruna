@@ -113,16 +113,27 @@ def convert_to_csv(test_suite):
 # --- Streamlit UI ---
 st.set_page_config(page_title="QA Test Case Gen", layout="centered")
 
-# 1. SIDEBAR (Project Status & Links)
+# 1. SIDEBAR (Instructions & Tech Stack)
 with st.sidebar:
-    st.markdown("### 🛠️ Project Status")
-    st.info("Verified Stable Release")
-    st.markdown("**Live App URL:**")
-    st.code("https://testcaseapp-c22-aruna.streamlit.app/", language="text")
+    st.header("🏭 About the Factory")
+    st.markdown("""
+    This AI agent doesn't just write text; it **architects** tests. 
+    
+    **How it works:**
+    1. **Designer Node:** Brainstorms 5 logical test paths based on your requirements.
+    2. **Reviewer Node:** Acts as Quality Control, ensuring every test has a 'Validate' step and automation selectors.
+    3. **Playwright Engine:** Converts manual logic into executable TypeScript code.
+    """)
+    
     st.divider()
-    st.write("This agent uses LangGraph to orchestrate a Designer and a Reviewer node for high-quality test generation.")
-    st.markdown("---")
-    st.caption("Developed by Aruna")
+    st.subheader("🛠️ Tech Stack")
+    st.caption("LangGraph | GPT-4o-mini | Streamlit | Playwright")
+    
+    st.divider()
+    if st.button("🗑️ Clear Current Results"):
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.rerun()
 
 # 2. MAIN HEADER
 st.title("📋 QA Test Case Generator")
