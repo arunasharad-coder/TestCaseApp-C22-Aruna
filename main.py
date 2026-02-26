@@ -58,10 +58,23 @@ app = workflow.compile()
 
 # --- CSV Helper Function ---
 def convert_to_csv(test_list):
-    # Splits the list into a simple DataFrame
-    data = {"Test Case Number": [f"TC_{i+1}" for i in range(len(test_list))],
-            "Steps": test_list}
-    df = pd.DataFrame(data)
+    jira_data = []
+    for i, tc in enumerate(test_list):
+        lines = tc.splitlines()
+        
+        # We assume line 5 is the "Validate" line based on your 1-5 format
+        steps = "\n".join(lines[:4])  # Steps 1 to 4
+        expected_result = lines[4] if len(lines) >= 5 else "Result not specified"
+        
+        jira_data.append({
+            "Summary": f"Test Case {i+1}: " + (lines[0] if lines else "Navigation"),
+            "Description": steps,
+            "Expected Result": expected_result, # New Column!
+            "Issue Type": "Test",
+            "Priority": "Medium"
+        })
+    
+    df = pd.DataFrame(jira_data)
     return df.to_csv(index=False).encode('utf-8')
 
 # --- Streamlit UI ---
