@@ -22,18 +22,28 @@ class AgentState(TypedDict):
     reflection: str
 
 # --- Output Model ---
-class TestCases(BaseModel):
-    test_cases: list[str] = Field(
-        description="List of exactly 5 manual test cases in the 1-5 navigation format."
-    )
+# Updated Model to separate Steps from Result
+class TestCase(BaseModel):
+    steps: str = Field(description="The 4 navigation steps (Go to, Click, Enter, Click)")
+    expected_result: str = Field(description="The 5th step starting with 'Validate -'")
 
-test_cases_parser = PydanticOutputParser(pydantic_object=TestCases)
+class TestSuite(BaseModel):
+    test_cases: list[TestCase] = Field(description="List of exactly 5 test cases")
 
+test_cases_parser = PydanticOutputParser(pydantic_object=TestSuite)
 # --- Nodes ---
+# Updated Prompt
 test_case_prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a QA Lead. Generate EXACTLY 5 test cases. \n"
-               "FORMAT:\n1. Go to -[URL]\n2. Click [Element]\n3. Enter [Data]\n4. Click [Button]\n5. Validate -[Result]\n\n"
-               "{format_instructions}"),
+    ("system", """You are a QA Engineer. Create 5 test cases.
+    For each case, provide:
+    1. 'steps': 4 numbered navigation steps.
+    2. 'expected_result': A single 'Validate -' statement.
+    
+    Example:
+    Steps: 1. Go to -site.com\n2. Click Login\n3. Enter user\n4. Click Submit
+    Expected Result: 5. Validate -Dashboard is visible
+    
+    {format_instructions}"""),
     ("human", "{user_input}"),
 ]).partial(format_instructions=test_cases_parser.get_format_instructions())
 
