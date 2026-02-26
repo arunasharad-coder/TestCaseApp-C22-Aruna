@@ -113,24 +113,24 @@ def convert_to_csv(test_suite):
 # --- Streamlit UI ---
 st.set_page_config(page_title="QA Test Case Gen", layout="centered")
 
-# 1. SIDEBAR (Instructions & Tech Stack)
+# 1. SIDEBAR (The "Learning Journey" Version)
 with st.sidebar:
-    st.header("🏭 About the Factory")
+    st.header("🐣 My QA Learning Lab")
     st.markdown("""
-    This AI agent doesn't just write text; it **architects** tests. 
+    Hey! I'm building this to learn how AI can help us in QA. 
     
-    **How it works:**
-    1. **Designer Node:** Brainstorms 5 logical test paths based on your requirements.
-    2. **Reviewer Node:** Acts as Quality Control, ensuring every test has a 'Validate' step and automation selectors.
-    3. **Playwright Engine:** Converts manual logic into executable TypeScript code.
+    **What's happening under the hood?**
+    * **The Designer:** An AI agent that tries to think like a manual tester.
+    * **The Reviewer:** A second agent that double-checks the work for quality.
+    * **Automation:** It even writes the Playwright scripts for me!
     """)
     
     st.divider()
-    st.subheader("🛠️ Tech Stack")
-    st.caption("LangGraph | GPT-4o-mini | Streamlit | Playwright")
+    st.subheader("⚙️ Built With")
+    st.caption("Python | Streamlit | LangChain | GPT-4o-mini")
     
     st.divider()
-    if st.button("🗑️ Clear Current Results"):
+    if st.button("🔄 Reset App"):
         for key in list(st.session_state.keys()):
             del st.session_state[key]
         st.rerun()
