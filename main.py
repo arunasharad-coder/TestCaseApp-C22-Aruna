@@ -114,6 +114,16 @@ def convert_to_csv(test_suite):
 st.set_page_config(page_title="QA Test Case Gen", layout="centered")
 st.title("📋 QA Test Case Generator")
 
+# --- ADD THE SIDEBAR HERE ---
+with st.sidebar:
+    st.markdown("### 🛠️ Project Status")
+    st.info("Verified Stable Release")
+    st.markdown(f"**URL:** [testcaseapp...](https://testcaseapp-c22-aruna.streamlit.app/)")
+    st.divider()
+    st.write("This agent uses LangGraph to orchestrate a Designer and a Reviewer node for high-quality test generation.")
+
+# Then continue with your input field
+query = st.text_input("Describe the feature to test:", placeholder="e.g. Test search functionality on google.com")
 query = st.text_input("Describe the feature to test:", placeholder="e.g. Test search functionality on google.com")
 
 # 1. MAIN TRIGGER (Cleaned up)
