@@ -130,6 +130,7 @@ def convert_to_csv(test_suite):
 st.set_page_config(page_title="QA Test Case Gen", layout="centered")
 
 # 1. SIDEBAR (The "Learning Journey" Version)
+
 with st.sidebar:
     st.header("🐣 My QA Learning Lab")
     st.markdown("""
@@ -142,6 +143,24 @@ with st.sidebar:
     """)
     
     st.divider()
+    
+    # --- Video Tutorial ---
+    st.subheader("📺 Quick Tutorial")
+    st.video("https://youtu.be/Tdd5-LWBrFg")
+    
+    st.divider()
+    
+    # --- Prompt Guidelines Section ---
+    st.subheader("💡 Better Prompts = Better Scripts")
+    st.markdown("""
+    To get accurate Playwright scripts, especially for sites with **many links or dropdowns**:
+    
+    1.  **Be Explicit:** Instead of "Test the site", say "Hover over 'Services', then click on 'Cloud Solutions'".
+    2.  **Define Actions:** Specify if a link should *navigate* to a new page or *open a menu*.
+    3.  **Use URLs:** Include the full URL so the AI can search for the correct selectors.
+    """)
+    
+    st.divider()
     st.subheader("⚙️ Built With")
     st.caption("Python | Streamlit | LangChain | GPT-4o-mini")
     
@@ -150,7 +169,7 @@ with st.sidebar:
         for key in list(st.session_state.keys()):
             del st.session_state[key]
         st.rerun()
-
+        
 # 2. MAIN HEADER
 st.title("📋 QA Test Cases Generator")
 query = st.text_input("Describe the feature to test:", placeholder="e.g. Test search functionality on google.com")
