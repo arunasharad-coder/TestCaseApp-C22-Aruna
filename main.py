@@ -136,7 +136,7 @@ with st.sidebar:
         st.rerun()
 
 # 2. MAIN HEADER
-st.title("📋 QA Test Case Generator")
+st.title("📋 QA Test Cases Generator")
 query = st.text_input("Describe the feature to test:", placeholder="e.g. Test search functionality on google.com")
 
 # 3. MAIN TRIGGER (LangGraph Execution)
