@@ -67,8 +67,9 @@ def designer_node(state: AgentState):
     user_req = state["user_input"].lower()
     
     if len(user_req) < 10:
-        return {"reflection": "Error: Requirement too short to be a valid test case."}
-
+        # UPDATE THIS LINE:
+        return {"reflection": "⚠️ **Please enter a relevant testing question.** (Example: 'Go to `https://google.com` and test the search button')"}
+    
     # --- UPDATED: Use Tavily to get real-time site structure ---
     search_context = ""
     if "http" in user_req or ".com" in user_req:
