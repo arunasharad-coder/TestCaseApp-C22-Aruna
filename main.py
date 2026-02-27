@@ -146,7 +146,7 @@ with st.sidebar:
     
     # --- Video Tutorial ---
     st.subheader("📺 Quick Tutorial")
-    st.video("https://youtu.be/Tdd5-LWBrFg")
+    st.video("https://www.youtube.com/watch?v=nkOLuILaOTo")
     
     st.divider()
     
