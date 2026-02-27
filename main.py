@@ -182,7 +182,7 @@ if st.button("Generate 5 Cases", type="primary"):
             results = app.invoke({"user_input": query, "test_cases": []})
             
             # GUARDRAIL CHECK: Catch errors from the Designer or Reviewer nodes
-            if "Error" in results.get("reflection", "") or "failed" in results.get("reflection", ""):
+            if "⚠️" in results.get("reflection", "") or "Error" in results.get("reflection", ""):
                 st.error(f"🚨 Quality Control Blocked: {results['reflection']}")
             else:
                 st.session_state.final_cases = results["test_cases"]
