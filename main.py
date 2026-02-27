@@ -7,13 +7,20 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
+# --- NEW ---
+from langchain_community.tools.tavily_search import TavilySearchResults
 from langgraph.graph import StateGraph, END
 
 # --- Environment Setup ---
 if "OPENAI_API_KEY" not in os.environ:
     st.warning("Please set OPENAI_API_KEY in your environment variables.")
+# --- NEW ---
+if "TAVILY_API_KEY" not in os.environ:
+    st.warning("Please set TAVILY_API_KEY in your environment variables.")
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+# --- NEW ---
+search_tool = TavilySearchResults(max_results=2)
 
 # --- Agent State ---
 class AgentState(TypedDict):
@@ -59,20 +66,29 @@ playwright_chain = playwright_prompt | llm
 def designer_node(state: AgentState):
     user_req = state["user_input"].lower()
     
-    # 1. First Line of Defense: Simple String Check
     if len(user_req) < 10:
         return {"reflection": "Error: Requirement too short to be a valid test case."}
 
+    # --- UPDATED: Use Tavily to get real-time site structure ---
+    search_context = ""
+    if "http" in user_req or ".com" in user_req:
+        st.write("🔍 Searching for real-time site details to prevent hallucinations...")
+        # Ask Tavily specifically for header links and dropdown menus
+        search_results = search_tool.invoke({"query": f"header links and dropdown menus on {user_req}"})
+        search_context = f"\nReal-time search context: {search_results}"
+    
     # 2. Second Line of Defense: Try/Except for Parsing
     try:
-        generated = test_case_generator.invoke({"user_input": state["user_input"]})
+        # --- MODIFIED: Include search context in the prompt ---
+        prompt_input = f"{state['user_input']}{search_context}"
+        generated = test_case_generator.invoke({"user_input": prompt_input})
         return {"test_cases": generated.test_cases[:5], "reflection": "Passed Initial Generation"}
     except Exception as e:
-        # If the LLM returns garbage or fails to format, we catch it here
         return {
             "test_cases": [], 
             "reflection": "Error: The AI couldn't turn that input into a test case. Please try a specific feature description."
         }
+        
 def reviewer_node(state: AgentState):
     cases = state.get("test_cases", [])
     if not cases:
