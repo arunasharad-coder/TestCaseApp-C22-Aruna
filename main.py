@@ -2,6 +2,9 @@ import os
 import pandas as pd
 import io
 import streamlit as st
+from dotenv import load_dotenv
+# Load environment variables from .env file
+load_dotenv()
 from typing import TypedDict
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
@@ -25,8 +28,11 @@ search_tool = TavilySearchResults(max_results=2)
 # --- Agent State ---
 class AgentState(TypedDict):
     user_input: str
-    test_cases: list[object] 
+    test_cases: list[object]
     reflection: str
+    test_count: int
+    test_type: str
+    requires_auth: bool
 
 # --- Output Model ---
 class TestCase(BaseModel):
@@ -35,18 +41,28 @@ class TestCase(BaseModel):
     selectors: str = Field(description="CSS selectors or IDs for elements in the steps (e.g., #login-btn, .search-bar)")
 
 class TestSuite(BaseModel):
-    test_cases: list[TestCase] = Field(description="List of exactly 5 test cases")
+    test_cases: list[TestCase] = Field(description="List of test cases as requested")
 
 test_cases_parser = PydanticOutputParser(pydantic_object=TestSuite)
 
 # --- Prompts & Chains ---
 test_case_prompt = ChatPromptTemplate.from_messages([
-    ("system", """You are a QA Engineer. Create 5 test cases.
-    For each case, provide:
-    1. 'steps': 4 numbered navigation steps.
-    2. 'expected_result': A single 'Validate -' statement.
-    3. 'selectors': Specific CSS selectors for the elements used.
-    
+    ("system", """You are a senior QA Engineer. Create exactly {test_count} test cases of type: {test_type}.
+
+    Test type guidance:
+    - Positive (Happy Path): Standard user flows where everything works as expected.
+    - Negative: Invalid inputs, wrong credentials, missing required fields, error states.
+    - Edge Cases: Boundary values, unusual inputs (empty, max length, special characters, unicode).
+    - Accessibility: Keyboard navigation, screen reader compatibility, ARIA labels, focus order.
+    - Mixed: A balanced combination of positive, negative, and edge cases across the suite.
+
+    {auth_context}
+
+    For each test case, provide:
+    1. 'steps': 4 numbered navigation steps appropriate for the test type.
+    2. 'expected_result': A single 'Validate -' statement describing the expected outcome.
+    3. 'selectors': Specific CSS selectors for the elements used (e.g., #login-btn, .search-bar).
+
     {format_instructions}"""),
     ("human", "{user_input}"),
 ]).partial(format_instructions=test_cases_parser.get_format_instructions())
@@ -67,23 +83,35 @@ def designer_node(state: AgentState):
     user_req = state["user_input"].lower()
     
     if len(user_req) < 10:
-        # UPDATE THIS LINE:
         return {"reflection": "⚠️ **Please enter a relevant testing question.** (Example: 'Go to `https://google.com` and test the search button')"}
     
-    # --- UPDATED: Use Tavily to get real-time site structure ---
     search_context = ""
     if "http" in user_req or ".com" in user_req:
         st.write("🔍 Searching for real-time site details to prevent hallucinations...")
-        # Ask Tavily specifically for header links and dropdown menus
         search_results = search_tool.invoke({"query": f"header links and dropdown menus on {user_req}"})
         search_context = f"\nReal-time search context: {search_results}"
     
-    # 2. Second Line of Defense: Try/Except for Parsing
+    # Build auth context based on user selection
+    if state.get("requires_auth"):
+        auth_context = (
+            "IMPORTANT: This site requires authentication. Generate test cases that ASSUME the user is "
+            "already logged in (do NOT include login steps). Tests will run with a pre-authenticated "
+            "browser session via Playwright's storage state pattern."
+        )
+    else:
+        auth_context = "No authentication required for this feature."
+    
     try:
-        # --- MODIFIED: Include search context in the prompt ---
         prompt_input = f"{state['user_input']}{search_context}"
-        generated = test_case_generator.invoke({"user_input": prompt_input})
-        return {"test_cases": generated.test_cases[:5], "reflection": "Passed Initial Generation"}
+        generated = test_case_generator.invoke({
+            "user_input": prompt_input,
+            "test_count": state.get("test_count", 5),
+            "test_type": state.get("test_type", "Positive (Happy Path)"),
+            "auth_context": auth_context,
+        })
+        # Slice to exact count requested (in case AI generates extra)
+        count = state.get("test_count", 5)
+        return {"test_cases": generated.test_cases[:count], "reflection": "Passed Initial Generation"}
     except Exception as e:
         return {
             "test_cases": [], 
@@ -173,13 +201,57 @@ with st.sidebar:
         
 # 2. MAIN HEADER
 st.title("📋 QA Test Cases Generator")
-query = st.text_input("Describe the feature to test:", placeholder="e.g. Test search functionality on google.com")
+# --- NEW: Configuration controls ---
+col1, col2, col3 = st.columns([1, 1, 1])
+
+with col1:
+    test_count = st.slider(
+        "Number of test cases",
+        min_value=3,
+        max_value=10,
+        value=5,
+        help="How many test cases should the AI generate?"
+    )
+
+with col2:
+    test_type = st.selectbox(
+        "Test type",
+        ["Positive (Happy Path)", "Negative", "Edge Cases", "Accessibility", "Mixed"],
+        index=0,
+        help="What kind of test cases do you want?"
+    )
+
+with col3:
+    requires_auth = st.checkbox(
+        "🔐 Site requires login",
+        value=False,
+        help="Check if the feature is behind a login wall"
+    )
+
+# Show auth guidance only when checked
+if requires_auth:
+    st.info(
+        "ℹ️ **Authentication assumed.** Generated tests will assume the user is already logged in. "
+        "We'll include a setup script using Playwright's storage state pattern. "
+        "You'll need to run that setup once before your tests can run."
+    )
+
+query = st.text_input(
+    "Describe the feature to test:",
+    placeholder="e.g. Test search functionality on google.com"
+)
 
 # 3. MAIN TRIGGER (LangGraph Execution)
-if st.button("Generate 5 Cases", type="primary"):
+if st.button(f"Generate {test_count} Cases", type="primary"):
     if query:
         with st.spinner("Factory is running QC..."):
-            results = app.invoke({"user_input": query, "test_cases": []})
+            results = app.invoke({
+                "user_input": query,
+                "test_cases": [],
+                "test_count": test_count,
+                "test_type": test_type,
+                "requires_auth": requires_auth,
+            })
             
             # GUARDRAIL CHECK: Catch errors from the Designer or Reviewer nodes
             if "⚠️" in results.get("reflection", "") or "Error" in results.get("reflection", ""):
