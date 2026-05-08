@@ -22,3 +22,8 @@ Thumbs.db
 !.vscode/settings.json
 !.vscode/extensions.json
 .idea/
+
+# Personal working notes (not for public repo)
+LINKEDIN_POSTS.md
+SESSION_LOG.md
+.notes/
