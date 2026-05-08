@@ -73,3 +73,29 @@ Phase 1 controls (started Session 1).
 - OpenAI GPT-4o-mini
 - Tavily search
 - python-dotenv
+
+## Future direction (post-Phase 8) — known gaps and opportunities
+
+QAGenie v2 generates test artifacts but does not yet address these deeper QA workflow problems. These are intentionally out of scope for v2 but represent the most valuable future work:
+
+### Gap 1: Framework integration
+QAGenie outputs individual test scripts, not framework-aware code. Real teams need:
+- Page Object Model (POM) structure
+- Framework config (playwright.config.ts, pytest.ini, testng.xml)
+- CI/CD setup (.github/workflows/e2e.yml)
+- Adaptation to existing team conventions
+
+### Gap 2: Selector accuracy (the hallucination problem)
+The AI doesn't know the actual DOM of the user's app. It generates selectors based on training data and educated guesses. Solutions worth exploring:
+- Live DOM inspection (AI navigates to URL and reads actual elements)
+- Codebase awareness (AI reads source code to find data-testid attributes)
+- Vision-based generation (AI takes screenshots of running app, identifies elements visually)
+
+### Gap 3: Apps without testids
+Most apps don't have data-testid attributes. Without them, AI-generated selectors are fragile. A "Selector Audit Mode" could:
+- Identify elements lacking testids
+- Suggest testid names following naming conventions
+- Generate a SELECTOR_MAP.md for the team
+- Bridge between "ideal AI-friendly app" and "real-world app"
+
+These three gaps represent v3 territory — substantial work, but the difference between QAGenie being a demo and being a production-grade SDET tool. Logged here so they're not forgotten.
