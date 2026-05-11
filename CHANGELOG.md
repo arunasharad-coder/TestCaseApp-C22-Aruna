@@ -1,4 +1,30 @@
 # QAGenie Changelog
+## v2.2 — 2026-05-11 — Phase 2: Selenium Java + TestNG output
+**Status:** Committed locally — deploy scheduled for Wed/Thu 2026-05-13/14
+
+**Shipped (locally):**
+- Framework selector dropdown (Playwright TS, Selenium Java + TestNG)
+- Senior-level Selenium Java prompt chain (TestNG annotations, WebDriverWait, Assert with messages, Javadoc)
+- Dynamic UI labels (button, tab) match selected framework
+- Java syntax highlighting for Java output
+
+**Why it matters:** v1 and v2.1 only generated Playwright TypeScript. Java/Selenium dominates enterprise QA job postings (~50-60% of mid-to-senior listings). With this update, QAGenie produces code for both modern (Playwright TS) and enterprise (Selenium Java + TestNG) stacks.
+
+**Validation:**
+- Verified Java output includes @BeforeMethod, @Test, @AfterMethod
+- Verified groups + priority + Javadoc generated correctly
+- Verified WebDriverWait used (not Thread.sleep)
+- Regression-tested: Playwright TypeScript still generates correctly
+
+**Files changed:** main.py (framework dropdown, selenium_java_prompt, selenium_java_chain, dynamic labels, Java syntax highlighting)
+
+**Bug fixed:** Curly-brace escaping in LangChain prompt template (`{"smoke"}` → `{{"smoke"}}`). Classic LangChain gotcha — `{}` is reserved for variable substitution; literal braces need doubling.
+
+**Deploy timing rationale:** Phase 1 LinkedIn post published earlier today (2026-05-11). Posting Phase 2 within 24 hours dilutes engagement. Deploy + post scheduled for Wed/Thu to give Post 1 its full 48-72hr engagement window.
+
+**LinkedIn post:** Drafted in LINKEDIN_POSTS.md, to be published Wed/Thu after deploy.
+
+---
 
 ## v2.1 — 2026-05-08 — Phase 1: User Controls
 

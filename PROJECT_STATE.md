@@ -1,6 +1,6 @@
 # QAGenie — Project State
 
-> **Last updated:** 2026-05-08 (Session 1)
+> **Last updated:** 2026-05-11 (Session 2)
 > **Always update this file at end of session.**
 
 ## App
@@ -10,46 +10,58 @@
 - **Tagline:** AI-powered test case generation for modern QA teams
 
 ## Current phase
-**Phase 1 — User Controls (✅ COMPLETE)**
+**Phase 2 — Selenium Java + TestNG output (✅ COMPLETE — code committed locally)**
 
 ## Current task
-Ready for Phase 2 — Selenium Java + TestNG output.
+Phase 2 committed locally. Awaiting strategic deploy window (Wed/Thu) before pushing to production and publishing LinkedIn Post 3.
 
-## What's working in development (v2 - not yet pushed)
+## What's deployed in production (v2.1)
 - Configurable test count (3-10 via slider)
 - Test type selection (Positive / Negative / Edge / Accessibility / Mixed)
-- Authentication-aware mode (Path A — assumes session, generates auth-aware code)
+- Authentication-aware mode (Path A — assumes session)
 - Dynamic button label matches selected count
-- Existing v1 features still working (regression-tested)
+- QAGenie branding (renamed from "QA Test Cases Generator")
+- Tagline visible below title
+- v1 features: 5 test cases default, LangGraph workflow, Tavily search, Jira CSV export, per-TC Playwright code generation, sidebar with tutorial
 
-## What's working in production (v1)
-- Generates 5 Playwright TypeScript test cases from a feature description
-- Multi-agent LangGraph workflow (Designer + Reviewer)
-- Tavily search integration for real-time site context
-- Jira CSV export
-- Per-test-case Playwright code generation with download button
-- Sidebar with tutorial video and prompt guidelines
-- Guardrails for invalid/short input
+## What's committed locally but NOT YET deployed (v2.2)
+- Framework selector dropdown (Playwright TypeScript vs Selenium Java + TestNG)
+- selenium_java_chain with senior-level prompt (TestNG annotations, WebDriverWait, groups, priority, Javadoc)
+- Dynamic button label matches selected framework
+- Dynamic tab label matches selected framework
+- Java syntax highlighting in code viewer
+- Regression-tested: Playwright TypeScript output still works
 
 ## What's in progress
-Phase 1 controls (started Session 1).
+Nothing in progress — Phase 2 fully complete locally.
 
 ## What's next (in order)
-1. **Phase 1 (current)** — Test count slider, test type dropdown, auth toggle
-2. **Phase 2** — Selenium Java + TestNG output
-3. **Phase 3** — Selenium Python + Playwright Python outputs
-4. **Phase 4** — Migration to Hugging Face Spaces + README polish + screenshots
-5. **Phase 5** — API testing mode (pytest+requests, REST Assured+TestNG)
-6. **Phase 6** — Postman Collection export + sample prompts button
-7. **Phase 7** — Requirement upload (PDF/docx → test cases)
-8. **Phase 8** — Coverage matrix + test history (last 5 runs)
+1. **Wed/Thu deploy** — push Phase 2 to production + publish LinkedIn Post 3
+2. **Phase 3** — Selenium Python + Playwright Python outputs
+3. **Phase 4** — Migration to Hugging Face Spaces + README polish + screenshots
+4. **Phase 5** — API testing mode (pytest+requests, REST Assured+TestNG)
+5. **Phase 6** — Postman Collection export + sample prompts button
+6. **Phase 7** — Requirement upload (PDF/docx → test cases)
+7. **Phase 8** — Coverage matrix + test history (last 5 runs)
+
+## ⏰ Pending deploys
+- **Phase 2 (Selenium Java + TestNG)** — committed locally on 2026-05-11. Deploy scheduled for Wed/Thu 2026-05-13/14 alongside LinkedIn Post 3. Reason for delay: Post 1 (Phase 1) published 2026-05-11; need 48-72hr engagement window before next post.
+
+### To deploy on Wed/Thu:
+1. `cd ~/qagenie && source .venv/bin/activate`
+2. `git push` (deploys 2 commits — Phase 2 code + tracking updates)
+3. Wait ~2 min for Streamlit Cloud to redeploy
+4. Verify production at https://testcaseapp-c22-aruna.streamlit.app/ shows framework dropdown
+5. Test both frameworks generate code on production
+6. Publish LinkedIn Post 3 (draft already in LINKEDIN_POSTS.md)
 
 ## Active decisions (locked in)
 - **Hosting:** Streamlit Cloud now → migrate to HF Spaces in Phase 4 — *migration easier with stable code, not WIP*
 - **Auth approach:** Path A (acknowledge limitation, generate auth-aware code with TODO comments) — *honest scope; production teams use storage state pattern anyway*
-- **Framework priority:** Playwright TS (done) → Selenium Java → Selenium Python → Playwright Python — *Java first for biggest job-market signal*
+- **Framework priority:** Playwright TS (done) → Selenium Java (done locally) → Selenium Python → Playwright Python — *Java first for biggest job-market signal*
 - **Time budget:** 15 hrs/week
 - **Cadence:** 1 LinkedIn post per shipped phase, every 3-5 days
+- **Deploy cadence:** Coordinate deploys with LinkedIn posts — never deploy a major feature without an accompanying announcement
 - **Project goal:** Land a job in AI-augmented QA / SDET / QA Tools roles
 
 ## Known blockers / open questions
