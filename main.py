@@ -78,6 +78,39 @@ playwright_prompt = ChatPromptTemplate.from_messages([
 
 playwright_chain = playwright_prompt | llm
 
+# --- Selenium Java + TestNG chain ---
+selenium_java_prompt = ChatPromptTemplate.from_messages([
+    ("system", """You are a Senior SDET specializing in Selenium Java with TestNG.
+
+Convert the provided manual test steps, expected result, and selectors into a clean, production-quality Selenium Java test class using TestNG.
+
+REQUIREMENTS:
+1. Generate a complete Java class — not just the test method.
+2. Use TestNG annotations: @BeforeMethod (setup), @Test (the test), @AfterMethod (teardown).
+3. The @Test annotation should include: groups (e.g., {{"smoke"}}) and a meaningful priority value.
+4. Use proper Selenium WebDriver imports and ChromeDriver for setup.
+5. Use Selenium's By selector strategies — match the selectors provided:
+   - If selector starts with #, use By.id()
+   - If selector starts with ., use By.cssSelector()
+   - If selector looks like an XPath, use By.xpath()
+6. Use TestNG's Assert class for verifications (Assert.assertTrue, Assert.assertEquals, etc.) with descriptive failure messages.
+7. Wrap the validation step in a proper Assert statement matching the "Validate -" expected_result.
+8. Include explicit waits using WebDriverWait + ExpectedConditions where appropriate (instead of Thread.sleep).
+9. The class name should reflect the test purpose (e.g., GoogleSearchTest, LoginValidationTest).
+10. Include a brief Javadoc comment above the @Test method explaining what it verifies.
+
+DO NOT include:
+- Maven pom.xml or build configuration
+- Multiple test methods in one class (one test class = one test for now)
+- Explanatory text before or after the code
+- Markdown code fences (the UI will format the code)
+
+Output ONLY the Java class code, starting from `package` or `import` statements."""),
+    ("human", "Steps: {steps}\nExpected Result: {expected_result}\nSelectors: {selectors}"),
+])
+
+selenium_java_chain = selenium_java_prompt | llm
+
 # --- Nodes ---
 def designer_node(state: AgentState):
     user_req = state["user_input"].lower()
@@ -230,6 +263,16 @@ with col3:
         value=False,
         help="Check if the feature is behind a login wall"
     )
+# Framework selector (full-width row below the 3-column controls)
+framework = st.selectbox(
+    "🛠️ Output framework",
+    [
+        "Playwright TypeScript",
+        "Selenium Java + TestNG",
+    ],
+    index=0,
+    help="Choose the framework and language for the generated test scripts"
+)
 
 # Show auth guidance only when checked
 if requires_auth:
@@ -275,8 +318,10 @@ if "final_cases" in st.session_state:
     
     for i, tc in enumerate(st.session_state.final_cases):
         with st.expander(f"Test Case {i+1}", expanded=False):
-            tab_manual, tab_auto = st.tabs(["📝 Manual Steps", "🤖 Playwright Script"])
-            
+            # Dynamic tab label based on framework selection
+            script_tab_label = f"🤖 {framework} Script"
+            tab_manual, tab_auto = st.tabs(["📝 Manual Steps", script_tab_label])
+                        
             with tab_manual:
                 col1, col2 = st.columns([2, 1])
                 with col1:
@@ -291,9 +336,15 @@ if "final_cases" in st.session_state:
                 st.caption(tc.selectors)
                 
                 # Each button has a unique key using the loop index 'i'
-                if st.button(f"Generate Playwright Code for TC {i+1}", key=f"gen_{i}"):
+                if st.button(f"Generate {framework} Code for TC {i+1}", key=f"gen_{i}"):
                     with st.spinner("Writing script..."):
-                        code_out = playwright_chain.invoke({
+                        # Pick the right chain based on framework selection
+                        if framework == "Selenium Java + TestNG":
+                            chain = selenium_java_chain
+                        else:  # Default: Playwright TypeScript
+                            chain = playwright_chain
+                        
+                        code_out = chain.invoke({
                             "steps": tc.steps,
                             "expected_result": tc.expected_result,
                             "selectors": tc.selectors
@@ -302,7 +353,9 @@ if "final_cases" in st.session_state:
                 
                 # Show code and download button if script exists in session state
                 if f"pw_code_{i}" in st.session_state:
-                    st.code(st.session_state[f"pw_code_{i}"], language="typescript")
+                    # Pick syntax highlighting based on framework
+                    code_language = "java" if framework == "Selenium Java + TestNG" else "typescript"
+                    st.code(st.session_state[f"pw_code_{i}"], language=code_language)
                     st.download_button(
                         label="💾 Download .spec.ts",
                         data=st.session_state[f"pw_code_{i}"],
