@@ -156,7 +156,7 @@ def convert_to_csv(test_suite):
     return df.to_csv(index=False).encode('utf-8')
 
 # --- Streamlit UI ---
-st.set_page_config(page_title="QA Test Case Gen", layout="centered")
+st.set_page_config(page_title="QAGenie", layout="centered")
 
 # 1. SIDEBAR (The "Learning Journey" Version)
 
@@ -200,7 +200,10 @@ with st.sidebar:
         st.rerun()
         
 # 2. MAIN HEADER
-st.title("📋 QA Test Cases Generator")
+st.markdown("""
+# QAGenie
+###### AI-powered test case generation for QA teams
+""")
 # --- NEW: Configuration controls ---
 col1, col2, col3 = st.columns([1, 1, 1])
 
