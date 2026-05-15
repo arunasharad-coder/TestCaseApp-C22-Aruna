@@ -110,6 +110,37 @@ Output ONLY the Java class code, starting from `package` or `import` statements.
 ])
 
 selenium_java_chain = selenium_java_prompt | llm
+# --- Playwright Python chain ---     ← NEW (we'll add this together)
+playwright_python_prompt = ChatPromptTemplate.from_messages([
+    ("system", """You are a senior SDET who specializes in Playwright Python with pytest.
+
+Convert the provided manual test steps, expected result and selectors, into a clean, production-quality Playwright Python test function using pytest.
+
+Requiremnts:
+    1. Generate a complete pytest test function — including all browser setup and teardown inline (no separate fixtures).
+    2. Use Playwright's sync API: `with sync_playwright() as p:` — handles setup and teardown automatically via Python's context manager.
+    3. Use pytest markers for test categorization (e.g., @pytest.mark.smoke, @pytest.mark.regression).
+    4. Import from `playwright.sync_api`. Launch a Chromium browser via `p.chromium.launch(headless=True)`.
+    5. Use `page.locator(selector)` for element interaction. Prefer Playwright's semantic locators (`get_by_role()`, `get_by_placeholder()`) where appropriate.
+    6. For browser-state assertions, use Playwright's `expect()`. For general assertions, use Python's `assert` with descriptive failure messages.
+    7. Wrap the validation step (`Validate - ...`) in an appropriate assertion using `expect()` or `assert`.
+    8. Rely on Playwright's built-in auto-waiting. Do NOT use `time.sleep()` — it's an anti-pattern.
+    9. The test function name should reflect what's being verified, using pytest's `test_` prefix (e.g., `test_login_with_valid_credentials`).
+    10. Include a brief docstring inside the test function explaining what it verifies.
+    
+    DO NOT include:
+    - pyproject.toml, requirements.txt, or any project configuration
+    - Multiple test functions in one output (generate one test function only)
+    - Explanatory text before or after the code
+    - Markdown code fences (the UI will format the code)
+    - time.sleep() — use Playwright's built-in auto-waiting instead
+    - print() statements for debugging — tests should communicate through assertions
+    - unittest-style assertions like self.assertEqual() — this is pytest, use plain assert or expect()
+    
+    Output ONLY the Python test code, starting from `import` statements."""),
+    ("human", "Steps: {steps}\nExpected Result: {expected_result}\nSelectors: {selectors}")
+])
+playwright_python_chain = playwright_python_prompt | llm
 
 # --- Nodes ---
 def designer_node(state: AgentState):
@@ -268,6 +299,7 @@ framework = st.selectbox(
     "🛠️ Output framework",
     [
         "Playwright TypeScript",
+        "Playwright Python",
         "Selenium Java + TestNG",
     ],
     index=0,
@@ -338,9 +370,10 @@ if "final_cases" in st.session_state:
                 # Each button has a unique key using the loop index 'i'
                 if st.button(f"Generate {framework} Code for TC {i+1}", key=f"gen_{i}"):
                     with st.spinner("Writing script..."):
-                        # Pick the right chain based on framework selection
                         if framework == "Selenium Java + TestNG":
                             chain = selenium_java_chain
+                        elif framework == "Playwright Python":
+                            chain = playwright_python_chain
                         else:  # Default: Playwright TypeScript
                             chain = playwright_chain
                         
@@ -354,7 +387,12 @@ if "final_cases" in st.session_state:
                 # Show code and download button if script exists in session state
                 if f"pw_code_{i}" in st.session_state:
                     # Pick syntax highlighting based on framework
-                    code_language = "java" if framework == "Selenium Java + TestNG" else "typescript"
+                    if framework == "Selenium Java + TestNG":
+                        code_language = "java"
+                    elif framework == "Playwright Python":
+                        code_language = "python"
+                    else:
+                        code_language = "typescript"
                     st.code(st.session_state[f"pw_code_{i}"], language=code_language)
                     st.download_button(
                         label="💾 Download .spec.ts",

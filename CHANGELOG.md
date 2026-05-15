@@ -1,4 +1,27 @@
 # QAGenie Changelog
+
+## v2.3 — Friday, May 15, 2026
+
+### Added
+- **Playwright Python** as a third output framework (local only, not deployed)
+- Playwright Python prompt chain in `main.py` with senior-quality requirements:
+  - Self-contained pytest test functions
+  - `sync_playwright()` context manager pattern
+  - pytest markers (`@pytest.mark.smoke`)
+  - Playwright's `expect()` for browser state, `assert` for general checks
+  - No `time.sleep()`, no `print()`, no unittest-style assertions
+- Framework dropdown extended from 2 to 3 options (Playwright TypeScript, Playwright Python, Selenium Java + TestNG)
+- Chain routing logic extended with `elif` branch for Playwright Python
+- Syntax highlighting logic converted from ternary to if/elif/else for cleaner 3+ framework support
+
+### Deployed
+- v2.2 (Phase 2 — Selenium Java + TestNG) pushed to production after sitting locally since 5/11
+
+### Known Issues
+- B1: Expander/tab state resets after code generation (documented in PROJECT_STATE.md)
+- B2: Download button always says `.spec.ts` regardless of selected framework
+- C1-C3: Sidebar copy still references "Playwright scripts" — needs generalization for multi-framework
+
 ## v2.2 — 2026-05-11 — Phase 2: Selenium Java + TestNG output
 **Status:** Committed locally — deploy scheduled for Wed/Thu 2026-05-13/14
 
