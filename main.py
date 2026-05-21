@@ -142,6 +142,42 @@ Requiremnts:
 ])
 playwright_python_chain = playwright_python_prompt | llm
 
+# --- Selenium Python chain ---
+selenium_python_prompt = ChatPromptTemplate.from_messages([
+    ("system", """You are a Senior SDET specializing in Selenium Python with pytest.
+
+Convert the provided manual test steps, expected result, and selectors into a clean, production-quality Selenium Python test using pytest.
+
+REQUIREMENTS:
+1. Generate a function-based pytest test (not class-based). The test function name should use snake_case with the `test_` prefix and reflect what's being verified (e.g., `test_google_search`, `test_login_with_valid_credentials`).
+2. Use a `@pytest.fixture` named `driver` for WebDriver setup/teardown. The fixture should yield the driver to the test, then call `driver.quit()` after.
+3. Use `webdriver-manager` for ChromeDriver setup — import `from webdriver_manager.chrome import ChromeDriverManager` and initialize with `webdriver.Chrome(service=Service(ChromeDriverManager().install()))`.
+4. Use pytest markers for test categorization (e.g., `@pytest.mark.smoke`, `@pytest.mark.regression`) on the test function.
+5. Use Selenium's `By` selector strategies — match the selectors provided:
+   - If selector starts with `#`, use `By.ID`
+   - If selector starts with `.`, use `By.CSS_SELECTOR`
+   - If selector looks like an XPath, use `By.XPATH`
+6. Use Python's built-in `assert` for verifications, always with a descriptive failure message (e.g., `assert results, "Validate - search results should be visible"`).
+7. Wrap the validation step in an `assert` matching the "Validate -" expected_result.
+8. Include explicit waits using `WebDriverWait` + `expected_conditions` where appropriate (e.g., waiting for elements to be clickable or visible). Never use `time.sleep()`.
+9. Include a brief docstring inside the test function explaining what it verifies.
+10. Required imports should include: `pytest`, `from selenium import webdriver`, `from selenium.webdriver.chrome.service import Service`, `from selenium.webdriver.common.by import By`, `from selenium.webdriver.support.ui import WebDriverWait`, `from selenium.webdriver.support import expected_conditions as EC`, and `from webdriver_manager.chrome import ChromeDriverManager`.
+
+DO NOT include:
+- pyproject.toml, requirements.txt, or any project configuration
+- Multiple test functions in one output (generate one test function + one fixture only)
+- Explanatory text before or after the code
+- Markdown code fences (the UI will format the code)
+- `time.sleep()` — use WebDriverWait instead
+- `print()` statements for debugging — tests should communicate through assertions
+- unittest-style assertions like `self.assertEqual()` — this is pytest, use plain `assert`
+- Class-based test structure (`class TestX:`) — use function-based pytest
+
+Output ONLY the Python test code, starting from `import` statements."""),
+    ("human", "Steps: {steps}\nExpected Result: {expected_result}\nSelectors: {selectors}")
+])
+selenium_python_chain = selenium_python_prompt | llm
+
 # --- Nodes ---
 def designer_node(state: AgentState):
     user_req = state["user_input"].lower()
@@ -301,6 +337,7 @@ framework = st.selectbox(
         "Playwright TypeScript",
         "Playwright Python",
         "Selenium Java + TestNG",
+        "Selenium Python",
     ],
     index=0,
     help="Choose the framework and language for the generated test scripts"
@@ -374,6 +411,8 @@ if "final_cases" in st.session_state:
                                     chain = selenium_java_chain
                                 elif framework == "Playwright Python":
                                     chain = playwright_python_chain
+                                elif framework == "Selenium Python":
+                                    chain = selenium_python_chain
                                 else:  # Default: Playwright TypeScript
                                     chain = playwright_chain
                                 
@@ -391,6 +430,8 @@ if "final_cases" in st.session_state:
                         code_language = "java"
                     elif framework == "Playwright Python":
                         code_language = "python"
+                    elif framework == "Selenium Python":
+                        code_language = "python"
                     else:
                         code_language = "typescript"
                     
@@ -398,6 +439,8 @@ if "final_cases" in st.session_state:
                     if framework == "Selenium Java + TestNG":
                         file_ext = "java"
                     elif framework == "Playwright Python":
+                        file_ext = "py"
+                    elif framework == "Selenium Python":
                         file_ext = "py"
                     else:
                         file_ext = "spec.ts"
