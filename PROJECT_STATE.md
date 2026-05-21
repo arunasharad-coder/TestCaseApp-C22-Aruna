@@ -1,6 +1,6 @@
 # QAGenie — Project State
 
-> **Last updated:** 2026-05-15 (Session 5)
+> **Last updated:** 2026-05-21 (Session 6 — Phase 3.5 in progress)
 > **Always update this file at end of session.**
 
 ## App
@@ -11,12 +11,17 @@
 - **Project goal:** Land a job in AI-augmented QA / SDET / QA Tools roles
 
 ## Current Status
-**Phase 3 — Playwright Python (built locally, not deployed)**
+**Phase 3.5 — UI polish (in progress, Session 6)**
 
+- v2.4 (Phase 3.5) — UI polish in progress: B2 + C1/C2/C3 done locally, B1 in progress
 - v2.3 (Phase 3) — Playwright Python chain added locally; not yet deployed
 - v2.2 (Phase 2) — Selenium Java + TestNG, deployed to production Fri 5/15
 - v2.1 — QAGenie branding (deployed earlier)
 - v2.0 / v1 — Original Playwright TypeScript output, LangGraph workflow, Tavily search, Jira CSV export
+
+## Recent Traction
+- Post 3 (Phase 2 announcement, Mon 5/18) — 17K impressions, 87 likes as of Thu 5/21 morning
+- LinkedIn About + Headline updated Wed 5/20 to position more confidently around AI-augmented QA tooling
 
 ## What's Deployed in Production
 - Configurable test count (3-10 via slider)
@@ -32,68 +37,76 @@
 - Java syntax highlighting in code viewer
 - v1 features: 5 test cases default, LangGraph workflow, Tavily search, Jira CSV export, per-TC code generation, sidebar with tutorial
 
-## What's Committed Locally but NOT Deployed (v2.3)
+## What's Committed Locally but NOT Deployed (v2.3 + v2.4 WIP)
+
+**From v2.3 (Phase 3 — Playwright Python):**
 - Playwright Python chain (senior-quality prompt with 10 requirements + DO NOT section)
 - Framework dropdown extended to 3 options (PW TS, PW Python, Selenium Java + TestNG)
 - Chain routing logic extended with `elif` for Playwright Python
 - `code_language` logic converted from ternary to if/elif/else for 3-framework support
 - Python syntax highlighting in code viewer
 
+**From v2.4 (Phase 3.5 — in progress Thu 5/21):**
+- ✅ B2 — Dynamic file extension for download button (`file_ext` derived from `framework`; label and file_name both now correct for .java / .py / .spec.ts)
+- ✅ C1 — Sidebar "Automation" line generalized for multi-framework
+- ✅ C2 — Sidebar tutorial "accurate Playwright scripts" → "accurate test scripts"
+- ✅ C3 — Confirmed already neutral after C2 fix; no further change needed
+- 🔄 B1 — Expander auto-opens when code exists (Approach C); ✅ added to TC header when code present (also closes L2)
+
 ## Immediate Next Session
-**Phase 3.5: UI polish** — Fix bugs and copy before any further prod deploy
-- Estimated effort: 60-90 min
-- Items: B1 (state collapse bug), B2 (download extension), C1-C3 (sidebar copy)
+**Phase 4 — Selenium Python** (planned for Fri 5/22)
+- Add `selenium_python_chain` following the same senior-quality pattern as Java
+- Add to framework dropdown (4th option)
+- Update routing + `code_language` + `file_ext` mappings
+- Deploy v2.4 + v2.5 together Fri 5/22
+- Post 4 (Selenium Python + Phase 3.5 polish summary) scheduled Tue 5/26 (after Memorial Day weekend)
 
 ## Roadmap
 1. **Phase 1** ✅ Posted — User controls (slider, type, auth toggle)
-2. **Phase 2** ✅ Deployed Fri 5/15 — Selenium Java + TestNG (LinkedIn Post 3 scheduled Mon 5/18)
-3. **Phase 3** (current) — Playwright Python (built locally)
-4. **Phase 3.5** — UI polish (B1, B2, C1-C3) before next deploy
-5. **Phase 4** — Selenium Python + UX upgrade (cards, indicators, empty states) + HF Spaces migration + README polish
-6. **Phase 5** — API testing mode (pytest+requests, REST Assured+TestNG)
-7. **Phase 6** — Postman Collection export + sample prompts button
-8. **Phase 7** — Requirement upload (PDF/docx → test cases)
-9. **Phase 8** — Coverage matrix + test history (last 5 runs)
+2. **Phase 2** ✅ Deployed Fri 5/15 — Selenium Java + TestNG (Post 3 = 17K impressions)
+3. **Phase 3** ✅ Built locally — Playwright Python
+4. **Phase 3.5** 🔄 In progress (Thu 5/21) — UI polish (B2, C1-C3 done; B1 in progress)
+5. **Phase 4** — Selenium Python + HF Spaces migration + README polish — *functional + infra work; ships fast*
+6. **Phase 5** — Polish Pass (UX upgrade) — *"Sweating the Streamlit details" — cards, indicators, empty states, fix B1 tab-reset quirk, L1 horizontal scroll workaround, README polish. Framed as a content moment: prompt-engineering for UX. See Post 5 idea below.*
+7. **Phase 6** — API testing mode (pytest+requests, REST Assured+TestNG)
+8. **Phase 7** — Postman Collection export + sample prompts button
+9. **Phase 8** — Requirement upload (PDF/docx → test cases)
+10. **Phase 9** — Coverage matrix + test history (last 5 runs)
+
+### Post ideas tied to roadmap
+- **Post 4 (Tue 5/26):** Phase 3.5 polish + Selenium Python launch — *"Small UI fixes, big UX wins"*
+- **Post 5 (post-Phase 5):** Polish Pass deep dive — *"Sweating the details: turning Streamlit quirks into UX wins (with the prompts I used)"* — Aruna's idea from Session 6. Process post, not announcement.
 
 ## Locked Decisions
 - **Hosting:** Streamlit Cloud now → migrate to HF Spaces in Phase 4 — *migration easier with stable code, not WIP*
 - **Auth approach:** Path A (acknowledge limitation, generate auth-aware code with TODO comments) — *honest scope; production teams use storage state pattern anyway*
 - **Framework rollout order:** Playwright TS (done) → Selenium Java (done) → Playwright Python (done locally) → Selenium Python (Phase 4) — *Java first for biggest job-market signal*
-- **UI framework:** Stay with Streamlit through Phase 8 (decided Fri 5/15 — see UI Framework Decision below)
+- **UI framework:** Stay with Streamlit through Phase 9 (decided Fri 5/15 — see UI Framework Decision below)
 - **Time budget:** 15 hrs/week
 - **Post cadence:** 1 LinkedIn post per shipped phase, every 3-5 days
 - **Deploy cadence:** Coordinate deploys with LinkedIn posts — never deploy a major feature without an accompanying announcement
 
-## Known UI Issues (Phase 3.5 backlog)
+## Known UI Issues
 
-### Bugs (must fix before next prod deploy)
+### Phase 3.5 — Done (Thu 5/21)
 
-**B1: Expander/tab state resets after Generate Code click** [HIGH]
-- Repro: Click expander on Test Case → pick Playwright Python Script tab → click Generate → state collapses → user must re-expand + re-click tab to see generated code
-- Root cause: Streamlit re-runs entire script on button click; expander state not preserved across re-runs
-- Fix approach: Use `st.session_state` to track expanded state per test case
-- Effort: 30-45 min
+- ✅ **B2:** Download button label + file_name now dynamic via `file_ext` derived from `framework`
+- ✅ **C1:** Sidebar Automation line generalized
+- ✅ **C2:** "accurate Playwright scripts" → "accurate test scripts"
+- ✅ **C3:** Confirmed already neutral after C2 fix
+- 🔄 **B1 (partial fix):** Approach C — expander auto-opens when code exists for that test case, ✅ shown on header. **Trade-off accepted:** tab still resets to "Manual Steps" on rerun (Streamlit limitation, no native API to control tab state). Full fix deferred to Phase 5 polish pass.
+- ✅ **L2:** TC headers now show ✅ when code generated (rolled into B1 fix)
 
-**B2: Download button label always says `.spec.ts`** [MEDIUM]
-- Wrong extension for Python (`.py`) and Java (`.java`) outputs
-- Fix: Make label and file_name dynamic based on `framework` value
-- Effort: 10 min
+### Phase 5 polish-pass backlog
 
-### Copy updates (must fix)
-
-- **C1:** Sidebar "Automation: It even writes the Playwright scripts for me!" — generalize for multi-framework
-- **C2:** Sidebar tutorial "To get accurate Playwright scripts..." — same issue
-- **C3:** 💡 "Better Prompts = Better Scripts" section — generalize language for multi-framework
-- Effort: 15 min total
-
-### Polish (nice to fix, not blocking)
-
-- **L1:** Code block scrolls horizontally on long lines — Streamlit limitation, hard to fully fix
-- **L2:** Test case headers don't visually indicate if code has been generated yet (could add ✅ when present)
+- **B1 tab-reset (deferred):** Restructure display loop — replace `st.tabs()` with controllable widget pattern (radio + container, or render-outside-tabs) so generated code is visible without tab switch. Estimated 45-60 min as part of broader polish phase.
+- **L1:** Code block scrolls horizontally on long lines — Streamlit limitation, explore wrap workarounds or scroll affordance
+- **UX upgrade:** Cards for test cases, generation-state indicators, empty states ("no test cases yet" placeholder)
+- **B1 expander auto-reopen quirk:** Currently if user manually closes an expander that has code, it re-opens on next rerun. Minor — accept for now, revisit during polish pass if it surfaces as user pain.
 
 ## UI Framework Decision
 
-**Decision:** Stay with Streamlit through Phase 8.
+**Decision:** Stay with Streamlit through Phase 9.
 
 **Reasoning (Fri 5/15):**
 - ~70% of code is already framework-portable (chains, prompts, models, LangGraph workflow)
@@ -107,7 +120,7 @@
 - Prefer pure functions (e.g. `generate(steps, expected)`) over Streamlit-coupled functions
 - Consider splitting `main.py` into `chains.py`, `models.py`, `workflow.py`, `main.py` (UI) later if migration becomes attractive
 
-## Future Direction / V3 Gaps (post-Phase 8)
+## Future Direction / V3 Gaps (post-Phase 9)
 
 QAGenie v2 generates test artifacts but does not yet address these deeper QA workflow problems. These are intentionally out of scope for v2 but represent the most valuable future work.
 

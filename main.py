@@ -232,7 +232,7 @@ with st.sidebar:
     **What's happening under the hood?**
     * **The Designer:** An AI agent that tries to think like a manual tester.
     * **The Reviewer:** A second agent that double-checks the work for quality.
-    * **Automation:** It even writes the Playwright scripts for me!
+    * **Automation:** It even writes the test scripts for me across multiple frameworks!
     """)
     
     st.divider()
@@ -246,7 +246,7 @@ with st.sidebar:
     # --- Prompt Guidelines Section ---
     st.subheader("💡 Better Prompts = Better Scripts")
     st.markdown("""
-    To get accurate Playwright scripts, especially for sites with **many links or dropdowns**:
+    To get accurate test scripts, especially for sites with **many links or dropdowns**:
     
     1.  **Be Explicit:** Instead of "Test the site", say "Hover over 'Services', then click on 'Cloud Solutions'".
     2.  **Define Actions:** Specify if a link should *navigate* to a new page or *open a menu*.
@@ -348,8 +348,8 @@ if st.button(f"Generate {test_count} Cases", type="primary"):
 if "final_cases" in st.session_state:
     st.subheader("Generated Test Suite")
     
-    for i, tc in enumerate(st.session_state.final_cases):
-        with st.expander(f"Test Case {i+1}", expanded=False):
+    for i, tc in enumerate(st.session_state.final_cases): 
+        with st.expander(f"Test Case {i+1}", expanded=False):        
             # Dynamic tab label based on framework selection
             script_tab_label = f"🤖 {framework} Script"
             tab_manual, tab_auto = st.tabs(["📝 Manual Steps", script_tab_label])
@@ -357,32 +357,32 @@ if "final_cases" in st.session_state:
             with tab_manual:
                 col1, col2 = st.columns([2, 1])
                 with col1:
-                    st.markdown("**Steps:**")
-                    st.code(tc.steps, language="text")
+                        st.markdown("**Steps:**")
+                        st.code(tc.steps, language="text")
                 with col2:
-                    st.markdown("**Expected Result:**")
-                    st.info(tc.expected_result)
+                        st.markdown("**Expected Result:**")
+                        st.info(tc.expected_result)
             
-            with tab_auto:
-                st.markdown("**Target Selectors:**")
-                st.caption(tc.selectors)
-                
-                # Each button has a unique key using the loop index 'i'
-                if st.button(f"Generate {framework} Code for TC {i+1}", key=f"gen_{i}"):
-                    with st.spinner("Writing script..."):
-                        if framework == "Selenium Java + TestNG":
-                            chain = selenium_java_chain
-                        elif framework == "Playwright Python":
-                            chain = playwright_python_chain
-                        else:  # Default: Playwright TypeScript
-                            chain = playwright_chain
+                with tab_auto:
+                        st.markdown("**Target Selectors:**")
+                        st.caption(tc.selectors)
                         
-                        code_out = chain.invoke({
-                            "steps": tc.steps,
-                            "expected_result": tc.expected_result,
-                            "selectors": tc.selectors
-                        })
-                        st.session_state[f"pw_code_{i}"] = code_out.content
+                        # Each button has a unique key using the loop index 'i'
+                        if st.button(f"Generate {framework} Code for TC {i+1}", key=f"gen_{i}"):
+                            with st.spinner("Writing script..."):
+                                if framework == "Selenium Java + TestNG":
+                                    chain = selenium_java_chain
+                                elif framework == "Playwright Python":
+                                    chain = playwright_python_chain
+                                else:  # Default: Playwright TypeScript
+                                    chain = playwright_chain
+                                
+                                code_out = chain.invoke({
+                                    "steps": tc.steps,
+                                    "expected_result": tc.expected_result,
+                                    "selectors": tc.selectors
+                                })
+                                st.session_state[f"pw_code_{i}"] = code_out.content
                 
                 # Show code and download button if script exists in session state
                 if f"pw_code_{i}" in st.session_state:
@@ -393,15 +393,23 @@ if "final_cases" in st.session_state:
                         code_language = "python"
                     else:
                         code_language = "typescript"
+                    
+                    # Pick file extension based on framework
+                    if framework == "Selenium Java + TestNG":
+                        file_ext = "java"
+                    elif framework == "Playwright Python":
+                        file_ext = "py"
+                    else:
+                        file_ext = "spec.ts"
+                    
                     st.code(st.session_state[f"pw_code_{i}"], language=code_language)
                     st.download_button(
-                        label="💾 Download .spec.ts",
+                        label=f"💾 Download .{file_ext}",
                         data=st.session_state[f"pw_code_{i}"],
-                        file_name=f"test_{i+1}.spec.ts",
+                        file_name=f"test_{i+1}.{file_ext}",
                         mime="text/plain",
                         key=f"dl_{i}" 
                     )
-
     # 5. GLOBAL DOWNLOAD (Jira CSV)
     st.divider()
     csv_data = convert_to_csv(st.session_state.final_cases)
