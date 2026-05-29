@@ -1,5 +1,85 @@
 # QAGenie Changelog
 
+## v2.4 — Thursday, May 21, 2026 — Phase 3 + 3.5 + 4a bundled deploy
+
+**Status:** Deployed to production in one push on 2026-05-21 afternoon. Three phases of work shipped together after Phase 3 sat locally for a week.
+
+### Shipped
+
+**Phase 3 — Playwright Python (added 3rd framework)**
+- New `playwright_python_prompt` + `playwright_python_chain` in `main.py`
+- Senior-quality prompt with 10 requirements + DO NOTs:
+  - Self-contained pytest test functions (no separate fixtures)
+  - `sync_playwright()` context manager pattern
+  - pytest markers (`@pytest.mark.smoke`)
+  - Playwright's `expect()` for browser state, `assert` for general checks
+  - Semantic locators (`get_by_role()`, `get_by_placeholder()`)
+  - No `time.sleep()`, no `print()`, no unittest-style assertions, no markdown fences
+- Framework dropdown extended from 2 → 3 options
+- Chain routing extended with `elif` branch
+- Syntax highlighting + file extension logic refactored from ternary to if/elif/else for cleaner 3+ framework support
+
+**Phase 3.5 — Polish pass (B2 + C1/C2/C3)**
+- **B2 fixed:** Download button label + `file_name` now dynamic per framework (uses `file_ext` derived from selected framework instead of hardcoded `.spec.ts`)
+- **C1/C2/C3 fixed:** Sidebar copy generalized for multi-framework — no longer references "Playwright scripts" exclusively. Now reads "test scripts" / "across multiple frameworks"
+- **B1 deferred to Phase 5** — expander/tab state resets after Generate Code click. Approach C stalled on nested `with` indentation issues; Streamlit also has no native API to control tab state. Decision: Phase 5 will restructure the display loop entirely (replace `st.tabs()` with a controllable pattern) and B1 dissolves as a byproduct.
+- **L2 deferred to Phase 5** — ✅ marker on TC headers after code generation. Bundled with B1 attempt; same deferral logic.
+
+**Phase 4a — Selenium Python (4th framework)**
+- New `selenium_python_prompt` + `selenium_python_chain` in `main.py`
+- Came together in ~30 min using the now-mature 10-requirements + DO NOT prompt template
+- Senior-quality requirements:
+  - Function-based pytest (not class-based)
+  - `@pytest.fixture` named `driver` for WebDriver setup/teardown
+  - `webdriver-manager` for ChromeDriver setup (avoids manual driver downloads)
+  - pytest markers for categorization
+  - By.ID / By.CSS_SELECTOR / By.XPATH strategy matching the selectors provided
+  - `WebDriverWait` + `expected_conditions` (never `time.sleep()`)
+  - Descriptive `assert` failure messages
+  - Docstring inside test function
+- Framework dropdown extended to 4 options
+- Chain routing + syntax highlighting + file extension logic extended for Selenium Python
+
+### Why it matters
+
+QAGenie is now feature-complete for the core multi-framework vision: **4 frameworks, 2 languages, modern + enterprise stacks covered**.
+- Playwright TypeScript (modern web)
+- Playwright Python (modern web, Python-native teams)
+- Selenium Java + TestNG (enterprise, fintech/healthcare/insurance default)
+- Selenium Python (data/ML-adjacent QA teams, Python shops with Selenium investment)
+
+Any QA team running any common stack can now generate first-draft test code with QAGenie. No framework switching required at the prompt level — one click in the dropdown.
+
+### Validation
+
+- Verified Playwright Python output: clean pytest test function with `sync_playwright()` context manager, no anti-patterns
+- Verified Selenium Python output: proper `@pytest.fixture(driver)`, `webdriver-manager` import, By strategy matching, WebDriverWait usage
+- Regression-tested Playwright TypeScript and Selenium Java — both still generate correctly
+- Verified B2 fix: Playwright TS download = `.spec.ts`, Playwright Python = `.py`, Selenium Java = `.java`, Selenium Python = `.py`
+- Verified C1/C2/C3 fixes: sidebar copy generic across framework selections
+
+### Files changed
+
+`main.py` — extensive:
+- 2 new prompt chains (`playwright_python_chain`, `selenium_python_chain`)
+- Framework dropdown expanded to 4 options
+- Chain selection logic in display loop extended with two new `elif` branches
+- `code_language` if/elif/else for 4 frameworks
+- `file_ext` if/elif/else for 4 frameworks (B2 fix)
+- Sidebar copy generalized (C1/C2/C3)
+
+### Known Issues (carried forward)
+
+- **B1:** Expander/tab state resets after code generation — deferred to Phase 5 restructure
+- **L1:** No progress indicators between Generate → Display steps — deferred to Phase 5
+- **L2:** ✅ marker on TC headers after successful code generation — deferred to Phase 5
+- **Gap 1:** No POM, no framework config, no CI/CD integration — addressed in V3 (Phase 10+)
+- **Gap 2:** Selectors are best-guess from feature description, not from observing real app — partial mitigation via Tavily search context for URLs; full fix is V3 territory
+
+### LinkedIn post
+
+**Post 4** drafted same week (~Sun 5/24-Mon 5/25), scheduled and published Tue 2026-05-27 at 10:21 AM CT. Coverage-led + honest-gap framing. First architect-level engagement on the comments (Cristian N.), plus complementary-tool engagement (Keber Flores, `@keber/qa-framework`).
+
 ## v2.3 — Friday, May 15, 2026
 
 ### Added
