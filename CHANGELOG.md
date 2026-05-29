@@ -1,5 +1,80 @@
 # QAGenie Changelog
 
+## v2.5 — Friday, May 29, 2026 — Phase 4b: HF Spaces deployment + dependency cleanup
+
+**Status:** Deployed. QAGenie now runs on TWO production targets simultaneously:
+- Streamlit Cloud (existing): https://testcaseapp-c22-aruna.streamlit.app/
+- Hugging Face Spaces (new): https://huggingface.co/spaces/arunasharad/qagenie
+
+Single GitHub repo as source of truth; both platforms auto-deploy on push to `main`.
+
+### Shipped
+
+**Dependency cleanup**
+- Audited `requirements.txt` line-by-line against `main.py` imports
+- Removed `langchain` umbrella meta-package — no direct `from langchain.X` imports anywhere in the codebase. 9 of 10 deps confirmed actively used; `langchain` was the only dead weight.
+- Tested in a fresh throwaway venv (`.venv-test`) end-to-end across all 4 frameworks before committing. Both local fresh-install and Streamlit Cloud rebuild succeeded without it.
+- Streamlines deployment footprint and removes a known source of LangChain ecosystem confusion (the umbrella vs. split-package distinction post-2024).
+
+**Hugging Face Spaces deployment (Phase 4b core)**
+- Created HF account: `arunasharad` (clean handle aligned with GitHub `arunasharad-coder`)
+- Created HF Space: `huggingface.co/spaces/arunasharad/qagenie` (Docker SDK + Streamlit template, CPU Basic Free, Public, MIT license)
+- Added HF Spaces YAML frontmatter to `README.md` (title, emoji 🧞, color theme, `app_file: main.py`, license, short description)
+- Added production-grade `Dockerfile`:
+  - Python 3.11-slim base
+  - Pip-install layer caching (copy requirements.txt before app code)
+  - HF Spaces port convention (`STREAMLIT_SERVER_PORT=7860`)
+  - Container networking (`STREAMLIT_SERVER_ADDRESS=0.0.0.0`)
+  - Headless mode + disabled usage stats
+- Configured HF Space secrets: `OPENAI_API_KEY`, `TAVILY_API_KEY`
+- Verified end-to-end: generated 3 Playwright TypeScript test cases via Tavily-augmented prompt (`Test the search bar on google.com`). All 4 framework outputs available; OpenAI + Tavily integrations confirmed working in the HF environment.
+
+**GitHub → HF auto-deploy pipeline**
+- Added `.github/workflows/sync-to-hf.yml` GitHub Actions workflow
+- Triggers on every push to `main` (plus manual `workflow_dispatch` for debugging)
+- Force-pushes the repo to HF Space's git remote using an `HF_TOKEN` write-scope token stored as a GitHub repo secret
+- Verified: 2 successful workflow runs visible in GitHub Actions tab; sync time ~10-13 seconds per push
+- Push-triggered (not pull-based) — chosen over HF's "Linked Repository" pull-polling for reliability and speed
+
+**Documentation hygiene**
+- Backfilled v2.4 CHANGELOG entry that was drafted on 2026-05-21 but never committed (8 days late — caught during Phase 4b file cleanup)
+- Expanded B1 (tab-reset bug) details in `PROJECT_STATE.md` Phase 5 scope with root cause analysis, recommended fix approach, and confirmation that the bug is unrelated to today's `requirements.txt` cleanup
+
+### Why it matters
+
+QAGenie is now portfolio-ready on the AI/ML-native discovery surface (HF Spaces) in addition to the data-app-native surface (Streamlit Cloud). Same code, same UX, two URLs. The HF presence signals "AI builder" to recruiters in a way `streamlit.app` doesn't. The mirror strategy means existing LinkedIn post URLs (Posts 1-4) keep working while the new HF URL becomes the canonical one going forward.
+
+The GitHub Actions sync also formalizes something architecturally important: GitHub is now the single source of truth, with deploy targets as downstream consequences. Adding a third deploy target later (Railway, Fly.io, a Docker registry) is a workflow file away.
+
+### Validation
+
+- ✅ Fresh-install in throwaway venv across all 4 frameworks
+- ✅ Streamlit Cloud auto-rebuild after `langchain` removal — green
+- ✅ Streamlit Cloud auto-rebuild after Dockerfile addition (no-op for Streamlit Cloud since it doesn't use Dockerfiles) — still green
+- ✅ HF Space build from clean state — green
+- ✅ HF Space functional verification: 3 Playwright TypeScript test cases generated cleanly from `Test the search bar on google.com` prompt with Tavily search context
+
+### Files changed
+
+- `requirements.txt` — removed `langchain` line
+- `README.md` — added HF Spaces YAML frontmatter + minimal body
+- `Dockerfile` — new, 28 lines
+- `.github/workflows/sync-to-hf.yml` — new, 22 lines
+- `CHANGELOG.md` — v2.4 backfill + this v2.5 entry
+- `PROJECT_STATE.md` — B1 details expanded; Phase 4b marked done
+
+### Known Issues (carried forward, unchanged)
+
+- **B1:** Expander/tab state resets after Generate Code click — deferred to Phase 5 (display loop restructure)
+- **L1:** No progress indicators between Generate → Display steps — Phase 5
+- **L2:** ✅ marker on TC headers after successful code generation — Phase 5 (dissolves with B1 fix)
+- **Gap 1:** No POM, no framework config, no CI/CD integration — V3
+- **Gap 2:** Selectors are best-guess from feature description, not from observing real app — V3
+
+### LinkedIn post
+
+**Post 5** drafting pending. Coverage angle: "QAGenie is now on HF Spaces — why an AI tool belongs on the AI-native platform" with a side note on the GitHub Actions-as-glue pattern. Target: ~3-5 days out to give Post 4 its full engagement window.
+
 ## v2.4 — Thursday, May 21, 2026 — Phase 3 + 3.5 + 4a bundled deploy
 
 **Status:** Deployed to production in one push on 2026-05-21 afternoon. Three phases of work shipped together after Phase 3 sat locally for a week.

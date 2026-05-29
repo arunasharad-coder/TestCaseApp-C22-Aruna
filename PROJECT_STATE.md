@@ -69,9 +69,14 @@ Live URL now generates code in 4 frameworks: Playwright TS, Playwright Python, S
 3. **Phase 3** ✅ Shipped Thu 5/21 — Playwright Python
 4. **Phase 3.5** ✅ Shipped Thu 5/21 — UI polish (B2, C1-C3 shipped; B1 deferred to Phase 5)
 5. **Phase 4a** ✅ Shipped Thu 5/21 — Selenium Python (Post 4 scheduled Tue 5/26)
-6. **Phase 4b** — HF Spaces migration + README polish — *infra hygiene, no LinkedIn dependency, do when bandwidth allows*
-**Phase 4b additional sub-tasks:**
-- Audit `requirements.txt` during HF Spaces migration. As of 2026-05-27: 9 of 10 deps confirmed actively used in `main.py`. Borderline line: `langchain` (umbrella meta-package) — no direct `from langchain.X` imports found. Verify removable by doing a fresh install with it removed and running the app end-to-end. If clean → remove from requirements.txt as a Phase 4b cleanup.
+6. 6. **Phase 4b** — HF Spaces deployment + dependency cleanup — ✅ **DONE 2026-05-29**
+   - HF Space live: https://huggingface.co/spaces/arunasharad/qagenie
+   - GitHub Actions auto-sync workflow active (`.github/workflows/sync-to-hf.yml`)
+   - `requirements.txt` cleaned (`langchain` umbrella removed; 9 deps remaining, all verified active)
+   - Dockerfile added for HF Spaces (Docker SDK + Streamlit template)
+   - HF Space secrets configured: `OPENAI_API_KEY`, `TAVILY_API_KEY`
+   - Both production targets (Streamlit Cloud + HF Spaces) deploy from same GitHub `main` branch
+   - **Remaining for Phase 4b that was descoped:** Full README polish (recruiter-facing portfolio version). Current README has minimal body + YAML frontmatter — functional but not polished. Bundled into Phase 5 since the polish work is UX/presentation, which fits Phase 5's "sweating the details" theme better than 4b's infra theme.
 7. **Phase 5** — Polish Pass (UX upgrade)
    - **Headline fix: B1 tab-reset bug** via display-loop restructure 
      (see B1 details below). Dissolves L2 as byproduct.
