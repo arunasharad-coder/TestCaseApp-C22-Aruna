@@ -110,6 +110,7 @@ Output ONLY the Java class code, starting from `package` or `import` statements.
 ])
 
 selenium_java_chain = selenium_java_prompt | llm
+
 # --- Playwright Python chain ---     ← NEW (we'll add this together)
 playwright_python_prompt = ChatPromptTemplate.from_messages([
     ("system", """You are a senior SDET who specializes in Playwright Python with pytest.
@@ -178,6 +179,13 @@ Output ONLY the Python test code, starting from `import` statements."""),
 ])
 selenium_python_chain = selenium_python_prompt | llm
 
+FRAMEWORK_CONFIG = {
+      "Playwright TypeScript":  {"language": "typescript", "ext": "spec.ts", "chain": playwright_chain},
+      "Playwright Python":      {"language": "python",     "ext": "py",      "chain": playwright_python_chain},
+      "Selenium Java + TestNG": {"language": "java",       "ext": "java",    "chain": selenium_java_chain},
+      "Selenium Python":        {"language": "python",     "ext": "py",      "chain": selenium_python_chain},
+  }
+
 # --- Nodes ---
 def designer_node(state: AgentState):
     user_req = state["user_input"].lower()
@@ -240,6 +248,41 @@ workflow.add_edge("designer", "reviewer")
 workflow.add_edge("reviewer", END)
 app = workflow.compile()
 
+# --- Display Helpers ---
+def render_manual_tab(tc):
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        st.markdown("**Steps:**")
+        st.code(tc.steps, language="text")
+    with col2:
+        st.markdown("**Expected Result:**")
+        st.info(tc.expected_result)
+def render_script_tab(tc, i, framework):
+    config = FRAMEWORK_CONFIG[framework]
+    st.markdown("**Target Selectors:**")
+    st.caption(tc.selectors)
+
+    # Each button has a unique key using the loop index 'i'
+    if st.button(f"Generate {framework} Code for TC {i+1}", key=f"gen_{i}"):
+        with st.spinner("Writing script..."):                        
+                code_out = config["chain"].invoke({
+                    "steps": tc.steps,
+                    "expected_result": tc.expected_result,
+                    "selectors": tc.selectors
+                                })
+                st.session_state[f"pw_code_{i}"] = code_out.content
+                
+    # Show code and download button if script exists in session state
+    if f"pw_code_{i}" in st.session_state:
+        st.code(st.session_state[f"pw_code_{i}"], language=config['language'])
+        st.download_button(
+            label=f"💾 Download .{config['ext']}",
+            data=st.session_state[f"pw_code_{i}"],
+            file_name=f"test_{i+1}.{config['ext']}",
+            mime="text/plain",
+            key=f"dl_{i}" 
+        )
+            
 # --- CSV Helper Function ---
 def convert_to_csv(test_suite):
     jira_data = []
@@ -298,6 +341,8 @@ with st.sidebar:
         for key in list(st.session_state.keys()):
             del st.session_state[key]
         st.rerun()
+        
+        
         
 # 2. MAIN HEADER
 st.markdown("""
@@ -386,73 +431,18 @@ if "final_cases" in st.session_state:
     st.subheader("Generated Test Suite")
     
     for i, tc in enumerate(st.session_state.final_cases): 
-        with st.expander(f"Test Case {i+1}", expanded=False):        
+        script_tab_label = f"🤖 {framework} Script"
+        has_code = f"pw_code_{i}" in st.session_state
+        on_script_tab = st.session_state.get(f"active_tab_{i}") == script_tab_label
+        with st.expander(f"Test Case {i+1}", expanded=(has_code or on_script_tab)):        
             # Dynamic tab label based on framework selection
-            script_tab_label = f"🤖 {framework} Script"
-            tab_manual, tab_auto = st.tabs(["📝 Manual Steps", script_tab_label])
-                        
-            with tab_manual:
-                col1, col2 = st.columns([2, 1])
-                with col1:
-                        st.markdown("**Steps:**")
-                        st.code(tc.steps, language="text")
-                with col2:
-                        st.markdown("**Expected Result:**")
-                        st.info(tc.expected_result)
             
-                with tab_auto:
-                        st.markdown("**Target Selectors:**")
-                        st.caption(tc.selectors)
-                        
-                        # Each button has a unique key using the loop index 'i'
-                        if st.button(f"Generate {framework} Code for TC {i+1}", key=f"gen_{i}"):
-                            with st.spinner("Writing script..."):
-                                if framework == "Selenium Java + TestNG":
-                                    chain = selenium_java_chain
-                                elif framework == "Playwright Python":
-                                    chain = playwright_python_chain
-                                elif framework == "Selenium Python":
-                                    chain = selenium_python_chain
-                                else:  # Default: Playwright TypeScript
-                                    chain = playwright_chain
-                                
-                                code_out = chain.invoke({
-                                    "steps": tc.steps,
-                                    "expected_result": tc.expected_result,
-                                    "selectors": tc.selectors
-                                })
-                                st.session_state[f"pw_code_{i}"] = code_out.content
+            active_tab = st.radio(label="View", options=["Manual Steps", script_tab_label], index=0, label_visibility="collapsed", horizontal=True, key=f"active_tab_{i}")
+            if active_tab == "Manual Steps":
+                render_manual_tab(tc)
+            else:
+                render_script_tab(tc, i, framework)
                 
-                # Show code and download button if script exists in session state
-                if f"pw_code_{i}" in st.session_state:
-                    # Pick syntax highlighting based on framework
-                    if framework == "Selenium Java + TestNG":
-                        code_language = "java"
-                    elif framework == "Playwright Python":
-                        code_language = "python"
-                    elif framework == "Selenium Python":
-                        code_language = "python"
-                    else:
-                        code_language = "typescript"
-                    
-                    # Pick file extension based on framework
-                    if framework == "Selenium Java + TestNG":
-                        file_ext = "java"
-                    elif framework == "Playwright Python":
-                        file_ext = "py"
-                    elif framework == "Selenium Python":
-                        file_ext = "py"
-                    else:
-                        file_ext = "spec.ts"
-                    
-                    st.code(st.session_state[f"pw_code_{i}"], language=code_language)
-                    st.download_button(
-                        label=f"💾 Download .{file_ext}",
-                        data=st.session_state[f"pw_code_{i}"],
-                        file_name=f"test_{i+1}.{file_ext}",
-                        mime="text/plain",
-                        key=f"dl_{i}" 
-                    )
     # 5. GLOBAL DOWNLOAD (Jira CSV)
     st.divider()
     csv_data = convert_to_csv(st.session_state.final_cases)

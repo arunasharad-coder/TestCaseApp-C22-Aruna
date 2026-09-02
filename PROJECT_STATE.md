@@ -1,6 +1,6 @@
 # QAGenie — Project State
 
-> **Last updated:** 2026-05-21 (Session 6 — Phase 3.5 + Phase 3 + Phase 4a SHIPPED to prod)
+> **Last updated:** 2026-06-08 (Session 7 — Phase 5: B1 FIXED via display-loop restructure; L2 + prompt rewrites + UX pass remaining)
 > **Always update this file at end of session.**
 
 ## App
@@ -12,12 +12,11 @@
 
 ## Current Status
 
-**Top of mind (as of 2026-05-27 EOD):**
-- Phase 4b queued — HF Spaces migration + README polish (~2-2.5 hr, no time pressure, no LinkedIn post gated on it)
-- Post 4 live since 2026-05-27 10:21 AM CT — 5 commenters, mixed engagement quality (1 substantive, 2 warm, 1 vague-critical, 1 architect-defender)
-- 3 LinkedIn replies drafted, awaiting post (Nikhil, Theresa, Keber)
-- Deliberate non-replies to Maksim and Cristian
-- Cowork adoption deferred to post-Phase 4b (Phase 5 timeframe at earliest)
+**Top of mind (as of 2026-06-08 EOD):**
+- Phase 5 in progress — **B1 FIXED** (st.tabs → st.radio bound to session_state); display loop restructured into helpers; FRAMEWORK_CONFIG done; expander-collapse-after-generate fixed. **All LOCAL — nothing deployed.**
+- Before the Post 5 ship: L2 (one-liner), 5a prompt rewrites (PW TS HIGH, Selenium Java MEDIUM), 5c UX upgrade, README polish, langchain-tavily migration.
+- 2 LinkedIn replies still pending (Nikhil, Theresa). Keber reply dropped — too late to be worth it.
+- Phase 5 accumulates toward Post 5 ("prompt engineering for UX").
 
 **Phase 4a — Selenium Python SHIPPED to production (Thu 5/21 afternoon)**
 
@@ -57,11 +56,12 @@ Live URL now generates code in 4 frameworks: Playwright TS, Playwright Python, S
 - v1 features: 5 test cases default, LangGraph workflow, Tavily search, Jira CSV export, per-TC code generation, sidebar with tutorial
 
 ## Immediate Next Session
-**Phase 4b — HF Spaces migration + README polish** (when bandwidth allows next week — no time pressure since no LinkedIn post is gated on this)
-- HF Spaces migration: secrets management, requirements.txt Python compatibility check, DNS/URL update, LinkedIn link refresh
-- README polish: header + badges + screenshot, quick start (clone/install/env/run), feature list, tech stack, architecture diagram (optional), roadmap, known limitations
-- Estimated: 2-2.5 hours total
-- No urgent timeline — Streamlit Cloud deploy is live and stable; HF migration is infra hygiene, not user-facing
+**Phase 5 continued** (5b done; 5a, 5c, README remain)
+- **L2** — ✅ marker (fold ✅ into expander label when `has_code`)
+- **5a — Prompt quality:** Playwright TS rewrite (HIGH); Selenium Java refresh (MEDIUM)
+- **5c — UX upgrade:** cards, indicators, empty states; L3 residual; L1 scroll; radio-as-tabs CSS
+- **README polish** + **langchain-tavily migration**
+- Then ship Phase 5 with Post 5
 
 ## Roadmap
 1. **Phase 1** ✅ Posted — User controls (slider, type, auth toggle)
@@ -77,17 +77,18 @@ Live URL now generates code in 4 frameworks: Playwright TS, Playwright Python, S
    - HF Space secrets configured: `OPENAI_API_KEY`, `TAVILY_API_KEY`
    - Both production targets (Streamlit Cloud + HF Spaces) deploy from same GitHub `main` branch
    - **Remaining for Phase 4b that was descoped:** Full README polish (recruiter-facing portfolio version). Current README has minimal body + YAML frontmatter — functional but not polished. Bundled into Phase 5 since the polish work is UX/presentation, which fits Phase 5's "sweating the details" theme better than 4b's infra theme.
-7. **Phase 5** — Polish Pass (UX upgrade)
-   - **Headline fix: B1 tab-reset bug** via display-loop restructure 
-     (see B1 details below). Dissolves L2 as byproduct.
-   - "Sweating the Streamlit details" — cards, indicators, empty states
-   - L1 horizontal scroll workaround
-   - Rewrite Playwright TS prompt to senior-quality (currently lags the 
-     other 3 chains)
-   - Refresh Selenium Java prompt for WebDriverManager + Javadoc placement
-   - Refactor `code_language`/`file_ext` into single FRAMEWORK_CONFIG dict
-   - README polish (if not already done in 4b)
-   - **Framing for Post 6:** prompt-engineering for UX
+7. **Phase 5** — Polish Pass — *split into 5a / 5b / 5c*
+   - **5b — Display-loop restructure / B1 — ✅ DONE 2026-06-08**
+     - B1 fixed: `st.tabs()` → `st.radio()` bound to `st.session_state[f"active_tab_{i}"]`
+     - Loop restructured into `render_manual_tab` / `render_script_tab` helpers (mis-nesting gone)
+     - `FRAMEWORK_CONFIG` refactor done (3 if/elif ladders → 1 lookup)
+     - Expander-collapse-after-generate fixed (`expanded=(has_code or on_script_tab)`)
+     - L2 remaining (one-liner using `has_code`)
+   - **5a — Prompt quality** [PENDING] — Playwright TS rewrite (HIGH); Selenium Java refresh (MEDIUM)
+   - **5c — UX upgrade** [PENDING] — cards/indicators/empty states; L1 scroll; radio-as-tabs CSS; L3 residual
+   - **README polish** (if not done elsewhere)
+   - **Framing for Post 5:** prompt-engineering for UX / sweating the Streamlit details
+   **B1 — ✅ FIXED 2026-06-08.** Replaced `st.tabs()` with `st.radio(label="View", options=["Manual Steps", script_tab_label], key=f"active_tab_{i}", horizontal=True, label_visibility="collapsed")`, branched with `if active_tab == "Manual Steps": … else: …`. The `key` binds selection to session_state, so it persists across the Generate rerun. Loop also restructured into helpers + FRAMEWORK_CONFIG added. Original analysis kept below for the record.
 **B1 details (verified 2026-05-29):**
 - **Symptom:** After clicking "Generate Code for TC N" inside a test case 
   expander, the tab indicator snaps back to "Manual Steps" even though the 
@@ -163,9 +164,12 @@ Surfaced from Post 3 commenter (senior architect, 18+ years) Thu 5/21. This is t
 ### Phase 5 polish-pass backlog
 
 **UI / UX**
-- **B1 (deferred from Phase 3.5):** Expander/tab state resets after Generate Code click. Approach C attempted Session 6 but stalled — nested `with` indentation compounded across edits and Streamlit's tab-state limitation means even a clean fix only solves half the problem. Phase 5 will restructure the display loop entirely (replace `st.tabs()` with a controllable widget pattern), which dissolves B1 as a byproduct. Estimated 45-60 min as part of the broader polish phase.
-- **L1:** Code block scrolls horizontally on long lines — Streamlit limitation, explore wrap workarounds or scroll affordance
-- **L2:** TC headers don't visually indicate if code has been generated (✅ on header) — was bundled with B1 attempt, also deferred. Trivial to add once the display loop is restructured.
+- **B1 — ✅ FIXED 2026-06-08** (st.tabs → st.radio bound to session_state; see Roadmap 5b)
+- **L1:** Code block scrolls horizontally on long lines — still open (5c)
+- **L2 — still open, now trivial:** fold a ✅ into the expander label when `has_code`. ~1 line.
+- **L3 (new):** Expander collapses when switching *back* to Manual Steps on a TC with no code — residual of `expanded=(has_code or on_script_tab)`. Minor; 5c candidate.
+- **Expander-collapse-after-generate — ✅ FIXED 2026-06-08** (`expanded=(has_code or on_script_tab)`)
+
 - **UX upgrade:** Cards for test cases, generation-state indicators, empty states ("no test cases yet" placeholder)
 - **Framework-specific reporting tips banner:** When framework changes, show small info hint with the right report command (e.g. PW TS → `npx playwright test --reporter=html`; PW Python / Selenium Python → `pytest --html=report.html` + note `pip install pytest-html`; Selenium Java → "View reports in `test-output/index.html`"). Adds production-grade hygiene without modifying generated test files.
 
